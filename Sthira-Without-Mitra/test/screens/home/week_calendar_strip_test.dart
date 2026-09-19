@@ -89,6 +89,23 @@ void main() {
           expect(rect.left, greaterThanOrEqualTo(0));
           expect(rect.right, lessThanOrEqualTo(320));
         }
+        // The sole return action must also fit when another day in this
+        // week is selected, including large text on a narrow phone.
+        await tester.tap(find.text('18'));
+        await tester.pumpAndSettle();
+        final todayButton = find.widgetWithText(TextButton, 'Today');
+        expect(todayButton, findsOneWidget);
+        final todayRect = tester.getRect(todayButton);
+        expect(todayRect.width, greaterThanOrEqualTo(48));
+        expect(todayRect.height, greaterThanOrEqualTo(48));
+        expect(todayRect.left, greaterThanOrEqualTo(0));
+        expect(todayRect.right, lessThanOrEqualTo(320));
+        expect(tester.takeException(), isNull);
+        await tester.tap(todayButton);
+        await tester.pumpAndSettle();
+        expect(find.widgetWithText(TextButton, 'Today'), findsNothing);
+        expect(tester.takeException(), isNull);
+
         final directory = const String.fromEnvironment('CALENDAR_CAPTURE');
         if (directory.isNotEmpty) {
           final boundary =
@@ -106,6 +123,31 @@ void main() {
         }
       });
     }
+  }
+
+  for (final day in [18, 20]) {
+    testWidgets('Today resets a selected day in the current week: $day', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(WeekCalendarStrip)),
+      );
+      expect(find.widgetWithText(TextButton, 'Today'), findsNothing);
+      await tester.tap(find.text('$day'));
+      await tester.pumpAndSettle();
+      expect(container.read(selectedDateProvider), DateTime(2026, 9, day));
+      expect(container.read(weekOffsetProvider), 0);
+      expect(find.widgetWithText(TextButton, 'Today'), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Today'));
+      await tester.pumpAndSettle();
+      expect(container.read(selectedDateProvider), _now);
+      expect(container.read(weekOffsetProvider), 0);
+      expect(find.text('This week'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Today'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   }
 
   testWidgets(
@@ -184,6 +226,16 @@ void main() {
     expect(container.read(weekOffsetProvider), 1);
     expect(container.read(selectedDateProvider), _now);
     expect(find.text('21–27 Sep'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Today'), findsOneWidget);
+    // Selection is already today; returning must still reset the browsed page.
+    await tester.tap(find.widgetWithText(TextButton, 'Today'));
+    await tester.pumpAndSettle();
+    expect(container.read(selectedDateProvider), _now);
+    expect(container.read(weekOffsetProvider), 0);
+    expect(find.text('This week'), findsOneWidget);
+    expect(find.text('19'), findsOneWidget);
+    expect(find.text('21'), findsNothing);
+    expect(find.widgetWithText(TextButton, 'Today'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

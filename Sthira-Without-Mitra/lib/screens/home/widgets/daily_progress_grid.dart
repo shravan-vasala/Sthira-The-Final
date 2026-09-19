@@ -1,8 +1,3 @@
-import 'package:trufit_bodamma/theme/app_typography.dart';
-import '../../../theme/app_motion.dart';
-
-import 'package:trufit_bodamma/theme/app_colors.dart';
-import 'package:trufit_bodamma/theme/app_spacing.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,14 +8,13 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/layout_insets.dart';
 import '../../../providers/app_providers.dart';
-import '../../../services/health_connect_service.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/app_bottom_sheet.dart';
 import '../weight_entry_dialog.dart';
 import '../steps_entry_dialog.dart';
 import 'sync_status_sheet.dart';
 import '../../../widgets/surface_card.dart';
-import 'package:trufit_bodamma/theme/app_typography.dart';
+import '../../../theme/app_typography.dart';
 import '../../../theme/app_motion.dart';
 
 class DailyProgressGrid extends ConsumerWidget {
@@ -37,11 +31,8 @@ class DailyProgressGrid extends ConsumerWidget {
 
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
-    final today = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
+    final now = ref.watch(clockProvider);
+    final today = DateTime(now.year, now.month, now.day);
     final isFuture = selectedDate.isAfter(today);
     final isToday = selectedDate.isAtSameMomentAs(today);
 
@@ -137,7 +128,6 @@ class _StepsCard extends ConsumerStatefulWidget {
 }
 
 class _StepsCardState extends ConsumerState<_StepsCard> {
-  bool _showSyncCta = false;
   bool _checkingPermission = true;
   bool _isAuth = false;
 
@@ -149,7 +139,6 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
 
   Future<void> _checkHealthConnectStatus() async {
     final hcService = ref.read(healthConnectServiceProvider);
-    final prefs = ref.read(sharedPreferencesProvider);
     // Simply query Health Connect if authorization exists.
     // Relying organically on healthConnect stepsSource in the UI.
     var connected = await hcService.canReadSteps();
@@ -162,7 +151,6 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
     if (mounted) {
       setState(() {
         _isAuth = connected;
-        _showSyncCta = !connected && widget.isToday;
         _checkingPermission = false;
       });
     }
@@ -204,7 +192,8 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
 
     // Hide Sync CTA once we have Health Connect data (covers race with async permission check)
     final showSyncCta =
-        _showSyncCta &&
+        widget.isToday &&
+        !_isAuth &&
         !_checkingPermission &&
         !(steps != null && stepsSource == 'healthConnect');
 
@@ -224,8 +213,6 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
       stepsSubtitle = widget.isFuture ? 'No data' : 'Tap to log';
       if (_isAuth) {
         sourceHint = 'Connected';
-      } else if (showSyncCta) {
-        sourceHint = 'HC/Manual';
       }
     }
 
@@ -247,149 +234,96 @@ class _StepsCardState extends ConsumerState<_StepsCard> {
                 );
               }
             },
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: context.colors.green.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(Radii.chip),
-            ),
-            child: Icon(
-              Icons.directions_walk_rounded,
-              size: 20,
-              color: context.colors.green,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Steps',
-                  style: context.text.cardTitle.copyWith(
-                    color: context.colors.textDark,
+      child: _ProgressContent(
+        title: 'Steps',
+        icon: Icons.directions_walk_rounded,
+        iconColor: context.colors.green,
+        navigable: !widget.isFuture,
+        roomyAction: showSyncCta,
+        details: Wrap(
+          spacing: Spacing.inline,
+          runSpacing: Spacing.inline,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (steps != null)
+              TweenAnimationBuilder<int>(
+                tween: IntTween(begin: 0, end: steps),
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : Motion.deliberate,
+                curve: Motion.enter,
+                builder: (context, value, child) => Text(
+                  '${NumberFormat.decimalPattern().format(value)} steps',
+                  style: context.text.caption.copyWith(
+                    color: context.colors.textMedium,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (steps != null)
-                      TweenAnimationBuilder<int>(
-                        tween: IntTween(begin: 0, end: steps),
-                        duration: MediaQuery.disableAnimationsOf(context)
-                            ? Duration.zero
-                            : Motion.deliberate,
-                        curve: Motion.enter,
-                        builder: (context, val, child) {
-                          return Text(
-                            '${NumberFormat.decimalPattern().format(val)} steps',
-                            style: context.text.caption.copyWith(
-                              color: context.colors.textMedium,
-                            ),
-                          );
-                        },
-                      )
-                    else
-                      Text(
-                        stepsSubtitle,
-                        style: context.text.caption.copyWith(
-                          color: context.colors.textMedium,
-                        ),
-                      ),
-                    if (sourceHint != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              (sourceHint == 'Synced' ||
-                                  sourceHint == 'Connected')
-                              ? context.colors.green.withValues(alpha: 0.1)
-                              : context.colors.border,
-                          borderRadius: BorderRadius.circular(Radii.micro),
-                        ),
-                        child: Text(
-                          sourceHint,
-                          style: context.text.micro.copyWith(
-                            color:
-                                (sourceHint == 'Synced' ||
-                                    sourceHint == 'Connected')
-                                ? context.colors.green
-                                : context.colors.textMedium,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+              )
+            else
+              Text(
+                stepsSubtitle,
+                style: context.text.caption.copyWith(
+                  color: context.colors.textMedium,
                 ),
-              ],
-            ),
-          ),
-          if (_checkingPermission)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: SizedBox(
-                width: 16,
-                height: 16,
+              ),
+            if (sourceHint != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.inline,
+                  vertical: Gap.x2,
+                ),
+                decoration: BoxDecoration(
+                  color: (sourceHint == 'Synced' || sourceHint == 'Connected')
+                      ? context.colors.green.withValues(alpha: 0.1)
+                      : context.colors.border,
+                  borderRadius: BorderRadius.circular(Radii.micro),
+                ),
+                child: Text(
+                  sourceHint,
+                  style: context.text.micro.copyWith(
+                    color: (sourceHint == 'Synced' || sourceHint == 'Connected')
+                        ? context.colors.green
+                        : context.colors.textMedium,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        action: _checkingPermission
+            ? SizedBox(
+                width: IconSize.inline,
+                height: IconSize.inline,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: context.colors.primary,
                 ),
-              ),
-            )
-          else if (showSyncCta)
-            GestureDetector(
-              onTap: _handleSyncTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Connect',
-                  style: context.text.caption.copyWith(
-                    color: context.colors.primary,
+              )
+            : showSyncCta
+            ? TextButton(
+                onPressed: _handleSyncTap,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  backgroundColor: context.colors.primary.withValues(
+                    alpha: 0.1,
                   ),
-                ),
-              ),
-            )
-          else ...[
-            if (steps != null) ...[
-              GestureDetector(
-                onTap: () => context.push('/progress?metric=steps'),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  height: 48,
-                  width: 48,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.show_chart_rounded,
-                    size: 22,
-                    color: context.colors.textMedium,
+                  foregroundColor: context.colors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.stack,
+                    vertical: Spacing.inline,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.chip),
+                  ),
+                  textStyle: context.text.caption,
                 ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            if (!widget.isFuture)
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 16,
-                color: context.colors.textMedium.withValues(alpha: 0.5),
-              ),
-          ],
-        ],
+                child: const Text('Connect'),
+              )
+            : steps != null
+            ? _ChartAction(
+                tooltip: 'View steps progress',
+                onPressed: () => context.push('/progress?metric=steps'),
+              )
+            : null,
       ),
     );
   }
@@ -430,127 +364,231 @@ class _ProgressCard extends ConsumerWidget {
       displaySubtitle = subtitle;
     }
 
+    final photos = thumbnails ?? const <String>[];
+    if (photos.isNotEmpty) {
+      displaySubtitle =
+          '${photos.length} progress ${photos.length == 1 ? 'photo' : 'photos'}';
+    }
+    final showChart =
+        onChartTap != null &&
+        displaySubtitle != 'Tap to log' &&
+        displaySubtitle != 'Tap to view' &&
+        displaySubtitle != 'No data yet';
+
     return SurfaceCard(
       margin: EdgeInsets.zero,
       onTap: onTap,
-      child: Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final largeText = MediaQuery.textScalerOf(context).scale(14) > 20;
+          final previewCount =
+              constraints.maxWidth < 280 ||
+                  largeText ||
+                  constraints.maxWidth >= 360
+              ? 2
+              : 1;
+          return _ProgressContent(
+            title: title,
+            icon: icon,
+            iconColor: iconColor,
+            navigable: onTap != null,
+            roomyAction: photos.isNotEmpty,
+            details: Text(
+              displaySubtitle,
+              style: context.text.caption.copyWith(
+                color: context.colors.textMedium,
+              ),
+            ),
+            action: photos.isNotEmpty
+                ? _PhotoPreviews(
+                    photos: photos,
+                    previewCount: previewCount,
+                    absolutePath: ref.read(mediaRepoProvider).getAbsolutePath,
+                  )
+                : showChart
+                ? _ChartAction(
+                    tooltip: 'View weight progress',
+                    onPressed: onChartTap!,
+                  )
+                : null,
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Keeps the familiar icon and typography while giving large text and secondary
+/// actions room to wrap instead of squeezing the title.
+class _ProgressContent extends StatelessWidget {
+  const _ProgressContent({
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    required this.details,
+    required this.navigable,
+    this.action,
+    this.roomyAction = false,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final Widget details;
+  final bool navigable;
+  final Widget? action;
+  final bool roomyAction;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final largeText = MediaQuery.textScalerOf(context).scale(14) > 20;
+      final actionBelow =
+          action != null &&
+          (largeText || (roomyAction && constraints.maxWidth < 280));
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(Radii.chip),
-            ),
-            child: Icon(icon, size: 20, color: iconColor),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.text.cardTitle.copyWith(
-                    color: context.colors.textDark,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(Spacing.stack),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(Radii.chip),
                 ),
-                const SizedBox(height: Gap.x4),
-                Text(
-                  displaySubtitle,
-                  style: context.text.caption.copyWith(
-                    color: context.colors.textMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (thumbnails != null && thumbnails!.isNotEmpty)
-            Row(
-              children: [
-                ...thumbnails!
-                    .take(3)
-                    .map(
-                      (path) => Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(Radii.micro),
-                          child: kIsWeb
-                              ? Image.network(
-                                  path,
-                                  width: 36,
-                                  height: 36,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.file(
-                                  File(
-                                    ref
-                                        .read(mediaRepoProvider)
-                                        .getAbsolutePath(path),
-                                  ),
-                                  width: 36,
-                                  height: 36,
-                                  fit: BoxFit.cover,
-                                  cacheWidth: 108,
-                                  cacheHeight: 108,
-                                ),
-                        ),
+                child: Icon(icon, size: IconSize.row, color: iconColor),
+              ),
+              const SizedBox(width: Spacing.block),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: context.text.cardTitle.copyWith(
+                        color: context.colors.textDark,
                       ),
                     ),
-                if (thumbnails!.length > 3)
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: context.colors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(Radii.micro),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '+${thumbnails!.length - 3}',
-                      style: context.text.micro.copyWith(
-                        color: context.colors.primary,
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                if (onTap != null)
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 16,
-                    color: context.colors.textMedium.withValues(alpha: 0.5),
-                  ),
-              ],
-            )
-          else ...[
-            if (onChartTap != null &&
-                displaySubtitle != 'Tap to log' &&
-                displaySubtitle != 'Tap to view' &&
-                displaySubtitle != 'No data yet') ...[
-              GestureDetector(
-                onTap: onChartTap,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  height: 48,
-                  width: 48,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.show_chart_rounded,
-                    size: 22,
-                    color: context.colors.textMedium,
-                  ),
+                    if (!largeText) ...[
+                      const SizedBox(height: Spacing.textPair),
+                      details,
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
+              if (action != null && !actionBelow) ...[
+                const SizedBox(width: Spacing.inline),
+                action!,
+              ],
+              if (navigable) ...[
+                const SizedBox(width: Spacing.inline),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: IconSize.inline,
+                  color: context.colors.textMedium.withValues(alpha: 0.5),
+                ),
+              ],
             ],
-            if (onTap != null)
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 16,
-                color: context.colors.textMedium.withValues(alpha: 0.5),
-              ),
+          ),
+          if (largeText) ...[const SizedBox(height: Spacing.inline), details],
+          if (actionBelow) ...[
+            const SizedBox(height: Spacing.stack),
+            Align(alignment: Alignment.centerRight, child: action!),
           ],
+        ],
+      );
+    },
+  );
+}
+
+class _ChartAction extends StatelessWidget {
+  const _ChartAction({required this.tooltip, required this.onPressed});
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: tooltip,
+    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+    onPressed: onPressed,
+    icon: Icon(
+      Icons.show_chart_rounded,
+      size: IconSize.row,
+      color: context.colors.textMedium,
+    ),
+  );
+}
+
+class _PhotoPreviews extends StatelessWidget {
+  const _PhotoPreviews({
+    required this.photos,
+    required this.previewCount,
+    required this.absolutePath,
+  });
+  final List<String> photos;
+  final int previewCount;
+  final String Function(String) absolutePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = photos.take(previewCount).toList();
+    // The photo count is already announced by the tile subtitle.
+    return ExcludeSemantics(
+      child: Wrap(
+        spacing: Spacing.textPair,
+        runSpacing: Spacing.inline,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final path in shown)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(Radii.micro),
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: kIsWeb
+                    ? Image.network(
+                        path,
+                        fit: BoxFit.cover,
+                        errorBuilder: _missingPhoto,
+                      )
+                    : Image.file(
+                        File(absolutePath(path)),
+                        fit: BoxFit.cover,
+                        cacheWidth: 108,
+                        cacheHeight: 108,
+                        errorBuilder: _missingPhoto,
+                      ),
+              ),
+            ),
+          if (photos.length > shown.length)
+            Container(
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              padding: const EdgeInsets.all(Spacing.inline),
+              decoration: BoxDecoration(
+                color: context.colors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(Radii.micro),
+              ),
+              child: Text(
+                '+${photos.length - shown.length}',
+                style: context.text.micro.copyWith(
+                  color: context.colors.primary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
         ],
       ),
     );
   }
+
+  Widget _missingPhoto(BuildContext context, Object error, StackTrace? stack) =>
+      ColoredBox(
+        color: context.colors.border,
+        child: Icon(
+          Icons.photo_outlined,
+          size: IconSize.row,
+          color: context.colors.textMedium,
+        ),
+      );
 }

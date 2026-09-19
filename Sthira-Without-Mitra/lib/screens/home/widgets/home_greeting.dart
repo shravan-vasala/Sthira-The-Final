@@ -96,15 +96,6 @@ class _HomeGreetingState extends ConsumerState<HomeGreeting>
       ),
       selectedDate: selectedDate,
       now: _now,
-      onReturnToToday: () {
-        final now = _readClock();
-        ref.read(selectedDateProvider.notifier).state = DateTime(
-          now.year,
-          now.month,
-          now.day,
-        );
-        ref.read(weekOffsetProvider.notifier).state = 0;
-      },
     );
   }
 }
@@ -116,14 +107,12 @@ class HomeGreetingContent extends StatelessWidget {
     required this.name,
     required this.selectedDate,
     required this.now,
-    required this.onReturnToToday,
     this.profileAction,
   });
 
   final String name;
   final DateTime selectedDate;
   final DateTime now;
-  final VoidCallback onReturnToToday;
   final Widget? profileAction;
 
   @override
@@ -142,87 +131,67 @@ class HomeGreetingContent extends StatelessWidget {
         : 'Good evening';
     final trimmedName = name.trim();
     final dateFormat = selectedDate.year == now.year
-        ? 'EEEE, d MMMM'
-        : 'EEEE, d MMMM yyyy';
+        ? 'EEE, d MMM'
+        : 'EEE, d MMM yyyy';
     final dayContext = isToday
         ? 'today'
         : selectedDay.isBefore(today)
         ? 'past day'
         : 'future day';
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    final heading = Semantics(
+      header: true,
+      child: isToday
+          ? Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: trimmedName.isEmpty ? greeting : '$greeting, ',
+                    style: context.text.screenTitle.copyWith(
+                      color: context.colors.textMedium,
+                    ),
+                  ),
+                  if (trimmedName.isNotEmpty)
+                    TextSpan(
+                      text: trimmedName,
+                      style: context.text.screenTitle.copyWith(
+                        color: context.colors.textDark,
+                      ),
+                    ),
+                ],
+              ),
+            )
+          : Text(
+              selectedDay.isBefore(today)
+                  ? 'Your day in review'
+                  : 'Your day ahead',
+              style: context.text.screenTitle,
+            ),
+    );
+    final date = Text(
+      DateFormat(dateFormat).format(selectedDay),
+      semanticsLabel:
+          'Selected day: ${DateFormat('EEEE, d MMMM yyyy').format(selectedDay)}, $dayContext',
+      style: context.text.caption.copyWith(color: context.colors.textMedium),
+    );
+
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
-                DateFormat(dateFormat).format(selectedDate),
-                semanticsLabel:
-                    'Selected day: ${DateFormat('EEEE, d MMMM yyyy').format(selectedDay)}, $dayContext',
-                style: context.text.caption.copyWith(
-                  color: context.colors.textMedium,
-                ),
-              ),
-            ),
-            if (profileAction != null) ...[
-              const SizedBox(width: Spacing.inline),
-              profileAction!,
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              heading,
+              const SizedBox(height: Spacing.textPair),
+              date,
             ],
-          ],
-        ),
-        const SizedBox(height: Spacing.textPair),
-        Semantics(
-          header: true,
-          child: isToday
-              ? Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: trimmedName.isEmpty ? greeting : '$greeting, ',
-                        style: context.text.screenTitle.copyWith(
-                          color: context.colors.textMedium,
-                        ),
-                      ),
-                      if (trimmedName.isNotEmpty)
-                        TextSpan(
-                          text: trimmedName,
-                          style: context.text.screenTitle.copyWith(
-                            color: context.colors.textDark,
-                          ),
-                        ),
-                    ],
-                  ),
-                )
-              : Text(
-                  selectedDay.isBefore(today)
-                      ? 'Your day in review'
-                      : 'Your day ahead',
-                  style: context.text.screenTitle,
-                ),
-        ),
-        if (!isToday) ...[
-          const SizedBox(height: Spacing.inline),
-          TextButton.icon(
-            onPressed: onReturnToToday,
-            icon: const Icon(
-              Icons.calendar_today_rounded,
-              size: IconSize.inline,
-            ),
-            label: const Text('Return to today'),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(48, 48),
-              foregroundColor: context.colors.accentText,
-              backgroundColor: context.colors.primary.withValues(alpha: 0.1),
-              textStyle: context.text.caption,
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.stack),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Radii.chip),
-              ),
-            ),
           ),
+        ),
+        if (profileAction != null) ...[
+          const SizedBox(width: Spacing.stack),
+          profileAction!,
         ],
       ],
     );

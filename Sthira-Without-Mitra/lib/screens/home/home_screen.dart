@@ -104,11 +104,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: Spacing.section),
 
                       // 3. Workout (primary daily action)
-                      if (plan != null && plan.days.isNotEmpty) ...[
-                        StaggeredFadeIn(
-                          key: const ValueKey('workouts_section'),
+                      if (WorkoutCompletion.hasSchedule(plan)) ...[
+                        const StaggeredFadeIn(
+                          key: ValueKey('workouts_section'),
                           index: 2,
-                          child: _WorkoutsSection(plan: plan),
+                          child: _WorkoutsSection(),
                         ),
                         const SizedBox(height: Spacing.section),
                       ],
@@ -200,10 +200,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           return StaggeredFadeIn(
                             key: const ValueKey('day_feeling_card'),
                             index: 7,
-                            child: DayFeelingCard(
-                              dateStr: log.date,
-                              initialFeeling: log.dayFeeling,
-                              initialNote: log.dayNote,
+                            child: SurfaceCard(
+                              child: DayFeelingCard(
+                                dateStr: log.date,
+                                initialFeeling: log.dayFeeling,
+                                initialNote: log.dayNote,
+                              ),
                             ),
                           );
                         },
@@ -278,7 +280,7 @@ class _WeeklySummaryLink extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "This week's summary",
+              "Weekly summary",
               style: context.text.body.copyWith(color: context.colors.textDark),
             ),
           ),
@@ -331,9 +333,7 @@ class _HabitsEditButton extends StatelessWidget {
 }
 
 class _WorkoutsSection extends ConsumerWidget {
-  const _WorkoutsSection({required this.plan});
-
-  final dynamic plan;
+  const _WorkoutsSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -346,7 +346,7 @@ class _WorkoutsSection extends ConsumerWidget {
     final dateStr = ref.watch(dateStringProvider);
 
     final selectedDate = DateTime.parse(dateStr);
-    final now = DateTime.now();
+    final now = ref.watch(clockProvider);
     final today = DateTime(now.year, now.month, now.day);
     final isFuture = selectedDate.isAfter(today);
 
@@ -377,24 +377,29 @@ class _WorkoutsSection extends ConsumerWidget {
         _buildCard(
           context,
           title: 'Rest Day',
-          subtitle: 'Recovery day — you\'re all set. Rest counts as complete.',
-          isCompleted: isWholeDayCompleted,
+          subtitle: isFuture
+              ? 'Planned recovery day.'
+              : 'Recovery day — you\'re all set. Rest counts as complete.',
+          isCompleted: !isFuture && isWholeDayCompleted,
           isFuture: isFuture,
           isRest: true,
         ),
       );
-      if (isWholeDayCompleted) completedCount = 1;
+      if (!isFuture && isWholeDayCompleted) completedCount = 1;
     } else {
       for (int i = 0; i < day.sections.length; i++) {
         if (i > 0) cards.add(const SizedBox(height: Spacing.stack));
         final sec = day.sections[i];
+        final exerciseLabel = sec.exercises.length == 1
+            ? '1 exercise'
+            : '${sec.exercises.length} exercises';
 
         final isCompleted = WorkoutCompletion.isSectionCompleteWithRepo(
           dateStr,
           sec,
           logRepo,
         );
-        if (isCompleted) completedCount++;
+        if (!isFuture && isCompleted) completedCount++;
 
         final String title = formatSectionTitle(sec.title, i);
 
@@ -412,8 +417,10 @@ class _WorkoutsSection extends ConsumerWidget {
         }
 
         String subtitle;
-        if (exercisesLogged == 0) {
-          subtitle = '${sec.exercises.length} exercises · Ready to start';
+        if (isFuture) {
+          subtitle = '$exerciseLabel · Upcoming workout';
+        } else if (exercisesLogged == 0) {
+          subtitle = '$exerciseLabel · Ready to start';
         } else if (exercisesLogged == sec.exercises.length) {
           subtitle =
               '${sec.exercises.length}/${sec.exercises.length} logged · View workout';
@@ -427,7 +434,7 @@ class _WorkoutsSection extends ConsumerWidget {
             context,
             title: title,
             subtitle: subtitle,
-            isCompleted: isCompleted,
+            isCompleted: !isFuture && isCompleted,
             isFuture: isFuture,
             isRest: false,
             heroTag: 'workout-${day.dayId}-section-$i',
@@ -638,7 +645,7 @@ class _WorkoutsSection extends ConsumerWidget {
               color: context.colors.textMedium,
               size: 32,
             )
-          else
+          else if (!isFuture)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Icon(

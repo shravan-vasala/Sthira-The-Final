@@ -16,7 +16,6 @@ import '../../../theme/app_spacing.dart';
 import 'package:trufit_bodamma/theme/app_typography.dart';
 import '../../../theme/app_motion.dart';
 
-
 class HabitsCard extends ConsumerWidget {
   const HabitsCard({super.key});
 
@@ -28,11 +27,8 @@ class HabitsCard extends ConsumerWidget {
 
     final selectedDateStr = ref.watch(dateStringProvider);
     final selectedDate = DateTime.parse(selectedDateStr);
-    final today = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
+    final now = ref.watch(clockProvider);
+    final today = DateTime(now.year, now.month, now.day);
     final isFuture = selectedDate.isAfter(today);
 
     return SurfaceCard(
@@ -45,10 +41,17 @@ class HabitsCard extends ConsumerWidget {
           children: [
             for (int i = 0; i < habits.length; i++)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.screen, vertical: Spacing.stack),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.screen,
+                  vertical: Spacing.stack,
+                ),
                 child: _HabitItem(
                   habit: habits[i],
-                  isCompleted: isHabitCompleted(habits[i], completions, dailyLog),
+                  isCompleted: isHabitCompleted(
+                    habits[i],
+                    completions,
+                    dailyLog,
+                  ),
                   isFuture: isFuture,
                   progress: getHabitProgress(habits[i], completions, dailyLog),
                 ),
@@ -95,172 +98,171 @@ class _HabitItem extends ConsumerWidget {
         confirmDismiss: (direction) => _handleSwipe(direction, context, ref),
         background: _buildSwipeBackground(context, true),
         secondaryBackground: _buildSwipeBackground(context, false),
-        child: Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: isFuture ? null : () => _handleTap(context, ref),
-                onLongPress: isFuture
-                    ? null
-                    : () => _handleLongPress(context, ref),
-                behavior: HitTestBehavior.opaque,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Center(
-                        child: _LivelyHabitCircle(
-                          isCompleted: isCompleted,
-                          isFuture: isFuture,
-                          progress: progress,
-                          target: habit.target,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final showCounter = habit.type == HabitType.counter && !isFuture;
+            final textScale = MediaQuery.textScalerOf(context).scale(15) / 15;
+            // Keep the label readable before placing controls beside it.
+            final inlineLabelWidth =
+                constraints.maxWidth -
+                48 -
+                Spacing.inline -
+                104 -
+                Spacing.inline -
+                24;
+            final controlsBelow =
+                showCounter && inlineLabelWidth < 112 * textScale;
+            final row = Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: isFuture ? null : () => _handleTap(context, ref),
+                    onLongPress: isFuture
+                        ? null
+                        : () => _handleLongPress(context, ref),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: _LivelyHabitCircle(
+                              isCompleted: isCompleted,
+                              isFuture: isFuture,
+                              progress: progress,
+                              target: habit.target,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: Spacing.inline),
+                        Expanded(child: _buildDetails(context, ref)),
+                      ],
                     ),
-                    const SizedBox(width: Spacing.inline),
-
-                    // Habit Name & Progress
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            habit.name,
-                            style: context.text.body.copyWith(
-                              color: context.colors.textDark,
-                            ),
-                          ),
-                          if (habit.type == HabitType.checkbox &&
-                              habit.unit.isNotEmpty &&
-                              habit.target > 0)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                'Goal: ${habit.target == habit.target.roundToDouble() ? habit.target.toInt() : habit.target} ${habit.unit}',
-                                style: context.text.micro.copyWith(
-                                  color: context.colors.textMedium,
-                                ),
-                              ),
-                            ),
-                          Row(
-                            children: [
-                              if (habit.type != HabitType.checkbox)
-                                GestureDetector(
-                                  onTap:
-                                      (habit.type == HabitType.autoSleep &&
-                                          !isFuture)
-                                      ? () {
-                                          showAppBottomSheet(
-                                            context: context,
-                                            builder: (_) =>
-                                                const SleepEntryDialog(),
-                                          );
-                                        }
-                                      : null,
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 2,
-                                      bottom: 2,
-                                      right: 8,
-                                    ),
-                                    child: Text(
-                                      _formatProgress(),
-                                      style: context.text.micro.copyWith(
-                                        color: context.colors.textMedium,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              Consumer(
-                                builder: (context, ref, child) {
-                                  final streak = ref.watch(
-                                    habitStreakProvider(habit.id),
-                                  );
-                                  if (streak > 1) {
-                                    return Container(
-                                      margin: const EdgeInsets.only(top: 2),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: context.colors.orange.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons
-                                                .local_fire_department_outlined,
-                                            size: 12,
-                                            color: context.colors.orange,
-                                          ),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            '$streak Day Streak',
-                                            style: context.text.micro.copyWith(
-                                              color: context.colors.orange,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-
-            // Action / Emoji
-            if (habit.type == HabitType.counter && !isFuture)
-              Row(
-                children: [
-                  _MiniButton(
-                    icon: Icons.remove_rounded,
-                    onTap: () {
-                      final newProg = (progress - habit.step).clamp(
-                        0.0,
-                        habit.target,
-                      );
-                      ref
-                          .read(habitCompletionsProvider.notifier)
-                          .updateProgress(habit.id, newProg);
-                    },
-                  ),
-                  const SizedBox(width: 4),
-                  _MiniButton(
-                    icon: Icons.add_rounded,
-                    onTap: () {
-                      final newProg = (progress + habit.step).clamp(
-                        0.0,
-                        habit.target,
-                      );
-                      ref
-                          .read(habitCompletionsProvider.notifier)
-                          .updateProgress(habit.id, newProg);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
-
-            _buildIcon(context, habit.icon),
-          ],
+                if (showCounter && !controlsBelow) _buildCounter(context, ref),
+                const SizedBox(width: Spacing.inline),
+                _buildIcon(context, habit.icon),
+              ],
+            );
+            if (!controlsBelow) return row;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                row,
+                const SizedBox(height: Spacing.textPair),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _buildCounter(context, ref),
+                ),
+              ],
+            );
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildDetails(BuildContext context, WidgetRef ref) {
+    final streak = ref.watch(habitStreakProvider(habit.id));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          habit.name,
+          style: context.text.body.copyWith(color: context.colors.textDark),
+        ),
+        if (habit.type == HabitType.checkbox &&
+            habit.unit.isNotEmpty &&
+            habit.target > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.textPair),
+            child: Text(
+              'Goal: ${habit.target == habit.target.roundToDouble() ? habit.target.toInt() : habit.target} ${habit.unit}',
+              style: context.text.micro.copyWith(
+                color: context.colors.textMedium,
+              ),
+            ),
+          ),
+        if (habit.type != HabitType.checkbox || streak > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.textPair),
+            child: Wrap(
+              spacing: Spacing.inline,
+              runSpacing: Spacing.textPair,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (habit.type != HabitType.checkbox)
+                  Text(
+                    _formatProgress(),
+                    style: context.text.micro.copyWith(
+                      color: context.colors.textMedium,
+                    ),
+                  ),
+                if (streak > 1)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.inline,
+                      vertical: Gap.x2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(Radii.micro),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.local_fire_department_outlined,
+                          size: IconSize.inline,
+                          color: context.colors.orange,
+                        ),
+                        const SizedBox(width: Gap.x2),
+                        Flexible(
+                          child: Text(
+                            '$streak Day Streak',
+                            style: context.text.micro.copyWith(
+                              color: context.colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCounter(BuildContext context, WidgetRef ref) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _MiniButton(
+          label: 'Decrease ${habit.name}',
+          icon: Icons.remove_rounded,
+          onTap: () {
+            final newProg = (progress - habit.step).clamp(0.0, habit.target);
+            ref
+                .read(habitCompletionsProvider.notifier)
+                .updateProgress(habit.id, newProg);
+          },
+        ),
+        const SizedBox(width: Spacing.inline),
+        _MiniButton(
+          label: 'Increase ${habit.name}',
+          icon: Icons.add_rounded,
+          onTap: () {
+            final newProg = (progress + habit.step).clamp(0.0, habit.target);
+            ref
+                .read(habitCompletionsProvider.notifier)
+                .updateProgress(habit.id, newProg);
+          },
+        ),
+      ],
     );
   }
 
@@ -354,10 +356,7 @@ class _HabitItem extends ConsumerWidget {
   }
 
   Widget _buildIcon(BuildContext context, String iconKey) {
-    return Icon(
-      HabitIcons.resolve(iconKey),
-      color: context.colors.textLight,
-      );
+    return Icon(HabitIcons.resolve(iconKey), color: context.colors.textLight);
   }
 
   String _formatProgress() {
@@ -478,28 +477,40 @@ class _HabitItem extends ConsumerWidget {
 
 class _MiniButton extends StatelessWidget {
   final IconData icon;
+  final String label;
   final VoidCallback onTap;
 
-  const _MiniButton({required this.icon, required this.onTap});
+  const _MiniButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+    return Tooltip(
+      message: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.chip),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(Gap.x4),
+                decoration: BoxDecoration(
+                  color: context.colors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(Radii.micro),
+                ),
+                child: Icon(
+                  icon,
+                  size: IconSize.inline,
+                  color: context.colors.primary,
+                ),
               ),
-              child: Icon(icon, size: 16, color: context.colors.primary),
             ),
           ),
         ),
@@ -533,10 +544,7 @@ class _LivelyHabitCircleState extends State<_LivelyHabitCircle>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Motion.deliberate,
-    );
+    _controller = AnimationController(vsync: this, duration: Motion.deliberate);
     _scaleAnimation = TweenSequence([
       TweenSequenceItem(
         tween: Tween<double>(
@@ -603,7 +611,11 @@ class _LivelyHabitCircleState extends State<_LivelyHabitCircle>
           alignment: Alignment.center,
           children: [
             widget.isCompleted
-                ? Icon(Icons.check_rounded, color: context.colors.onPrimary, size: 16)
+                ? Icon(
+                    Icons.check_rounded,
+                    color: context.colors.onPrimary,
+                    size: 16,
+                  )
                 : (widget.isFuture
                       ? Icon(
                           Icons.lock_outline_rounded,

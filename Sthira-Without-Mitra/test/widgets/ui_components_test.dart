@@ -236,7 +236,6 @@ void main() {
                           name: 'Alex',
                           selectedDate: DateTime(2026, 9, 19),
                           now: DateTime(2026, 9, 19, 10),
-                          onReturnToToday: () {},
                         ),
                         const SizedBox(height: 24),
                         SectionHeader(

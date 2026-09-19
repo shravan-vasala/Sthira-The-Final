@@ -152,21 +152,16 @@ void main() {
 
       await tester.pumpWidget(
         _app(
-          HomeGreetingContent(
-            name: name,
-            selectedDate: now,
-            now: now,
-            onReturnToToday: () {},
-          ),
+          HomeGreetingContent(name: name, selectedDate: now, now: now),
           textScale: 2,
         ),
       );
 
       expect(tester.takeException(), isNull);
       expect(find.text('Good morning, $name'), findsOneWidget);
-      expect(find.text('Saturday, 19 September'), findsOneWidget);
+      expect(find.text('Sat, 19 Sep'), findsOneWidget);
       expect(find.text('Return to today'), findsNothing);
-      final date = tester.widget<Text>(find.text('Saturday, 19 September'));
+      final date = tester.widget<Text>(find.text('Sat, 19 Sep'));
       expect(date.style?.fontSize, 13);
     },
   );
@@ -181,17 +176,13 @@ void main() {
             name: 'Alex',
             selectedDate: DateTime(2025, 9, 19),
             now: now,
-            onReturnToToday: () {},
           ),
         ),
       );
       expect(find.text('Your day in review'), findsOneWidget);
-      expect(find.text('Friday, 19 September 2025'), findsOneWidget);
+      expect(find.text('Fri, 19 Sep 2025'), findsOneWidget);
       expect(find.text('Good morning, Alex'), findsNothing);
-      expect(
-        tester.getSize(find.byType(TextButton)).height,
-        greaterThanOrEqualTo(48),
-      );
+      expect(find.text('Return to today'), findsNothing);
 
       await tester.pumpWidget(
         _app(
@@ -199,12 +190,11 @@ void main() {
             name: 'Alex',
             selectedDate: DateTime(2026, 9, 20),
             now: now,
-            onReturnToToday: () {},
           ),
         ),
       );
       expect(find.text('Your day ahead'), findsOneWidget);
-      expect(find.text('Sunday, 20 September'), findsOneWidget);
+      expect(find.text('Sun, 20 Sep'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -218,17 +208,17 @@ void main() {
         for (final scenario in [
           (
             date: now,
-            visible: 'Saturday, 19 September',
+            visible: 'Sat, 19 Sep',
             spoken: 'Selected day: Saturday, 19 September 2026, today',
           ),
           (
             date: DateTime(2025, 9, 19),
-            visible: 'Friday, 19 September 2025',
+            visible: 'Fri, 19 Sep 2025',
             spoken: 'Selected day: Friday, 19 September 2025, past day',
           ),
           (
             date: DateTime(2026, 9, 20),
-            visible: 'Sunday, 20 September',
+            visible: 'Sun, 20 Sep',
             spoken: 'Selected day: Sunday, 20 September 2026, future day',
           ),
         ]) {
@@ -238,7 +228,6 @@ void main() {
                 name: 'Alex',
                 selectedDate: scenario.date,
                 now: now,
-                onReturnToToday: () {},
               ),
             ),
           );
@@ -259,7 +248,7 @@ void main() {
     },
   );
 
-  testWidgets('return to today resets both date and calendar week', (
+  testWidgets('review header leaves the Today action to the calendar', (
     tester,
   ) async {
     final now = DateTime(2026, 9, 19, 10);
@@ -269,14 +258,12 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(HomeGreeting)),
     );
-
-    await tester.tap(find.text('Return to today'));
-    await tester.pump();
-
-    expect(container.read(selectedDateProvider), DateTime(2026, 9, 19));
-    expect(container.read(weekOffsetProvider), 0);
-    expect(find.text('Good morning, Alex'), findsOneWidget);
+    expect(find.text('Your day in review'), findsOneWidget);
+    expect(find.text('Sat, 29 Aug'), findsOneWidget);
     expect(find.text('Return to today'), findsNothing);
+    expect(find.text('Today'), findsNothing);
+    expect(container.read(selectedDateProvider), DateTime(2026, 8, 29));
+    expect(container.read(weekOffsetProvider), -3);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

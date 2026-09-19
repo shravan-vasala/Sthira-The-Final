@@ -449,6 +449,7 @@ class _DayFeelingCardState extends ConsumerState<DayFeelingCard> {
               final width =
                   (constraints.maxWidth - gap * (columns - 1)) / columns;
               return Wrap(
+                alignment: WrapAlignment.center,
                 spacing: gap,
                 runSpacing: gap,
                 children: List.generate(5, (index) {

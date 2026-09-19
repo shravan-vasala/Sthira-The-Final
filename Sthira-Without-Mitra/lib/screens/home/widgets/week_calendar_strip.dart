@@ -257,9 +257,11 @@ class _WeekCalendarStripState extends ConsumerState<WeekCalendarStrip> {
               arrow(true),
             ],
           );
-          final returnToToday = offset != 0
+          final returnToToday =
+              offset != 0 || !DateUtils.isSameDay(selected, today)
               ? TextButton(
                   onPressed: () => _selectDate(today),
+                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
                   child: const Text('Today'),
                 )
               : null;

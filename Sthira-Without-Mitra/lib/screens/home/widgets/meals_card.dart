@@ -57,123 +57,117 @@ class MealsCard extends ConsumerWidget {
         : 'Totals reflect logged meals, which may be incomplete.';
 
     return Semantics(
-      button: true,
       label:
           'Meals Card. $completedMeals of $totalMeals meals logged. $completedCal calories logged. Daily target $totalCal calories.',
-      child: GestureDetector(
+      child: SurfaceCard(
         onTap: () {
           Haptics.tap();
           context.go('/home/meals');
         },
-        behavior: HitTestBehavior.opaque,
-        child: SurfaceCard(
-          margin: const EdgeInsets.symmetric(horizontal: kScreenPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isToday
-                              ? "Today's Meals"
-                              : (isFuture ? "Upcoming Meals" : "Meals"),
-                          style: context.text.cardTitle.copyWith(
-                            color: context.colors.textDark,
-                          ),
+        margin: const EdgeInsets.symmetric(horizontal: kScreenPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isToday
+                            ? "Today's Meals"
+                            : (isFuture ? "Upcoming Meals" : "Meals"),
+                        style: context.text.cardTitle.copyWith(
+                          color: context.colors.textDark,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          planName,
-                          style: context.text.caption.copyWith(
-                            color: context.colors.textMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: context.colors.textLight,
-                    size: 16,
-                  ),
-                ],
-              ),
-              const SizedBox(height: Spacing.block),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(Radii.micro),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: context.colors.primary.withValues(
-                    alpha: 0.12,
-                  ),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isOverTarget ? context.colors.orange : context.colors.green,
-                  ),
-                  minHeight: 6,
-                ),
-              ),
-              const SizedBox(height: Spacing.stack),
-              TweenAnimationBuilder<int>(
-                tween: IntTween(begin: 0, end: completedCal),
-                duration: MediaQuery.disableAnimationsOf(context)
-                    ? Duration.zero
-                    : Motion.deliberate,
-                curve: Motion.enter,
-                builder: (context, val, child) {
-                  return Text(
-                    totalCal > 0
-                        ? '$completedMeals/$totalMeals meals  \u00b7  $val/$totalCal kcal logged'
-                        : '$completedMeals/$totalMeals meals  \u00b7  $val kcal logged',
-                    style: AppTheme.numeric(
-                      context.text.caption.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: context.colors.textMedium,
                       ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: Spacing.inline),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  if (!dailyLog.hasCompleteMacros)
-                    Text('Macros incomplete', style: context.text.caption),
-                  if (dailyLog.hasCompleteMacros)
-                    _MacroPill(
-                      label: 'P',
-                      value: dailyLog.totalProtein,
-                      color: context.colors.green,
-                    ),
-                  if (dailyLog.hasCompleteMacros)
-                    _MacroPill(
-                      label: 'C',
-                      value: dailyLog.totalCarbs,
-                      color: context.colors.orange,
-                    ),
-                  if (dailyLog.hasCompleteMacros)
-                    _MacroPill(
-                      label: 'F',
-                      value: dailyLog.totalFat,
-                      color: context.colors.primary,
-                    ),
-                ],
-              ),
-              const SizedBox(height: Spacing.stack),
-              Text(
-                summary,
-                style: context.text.micro.copyWith(
-                  color: context.colors.textMedium,
+                      const SizedBox(height: 2),
+                      Text(
+                        planName,
+                        style: context.text.caption.copyWith(
+                          color: context.colors.textMedium,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.colors.textLight,
+                  size: 16,
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.block),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(Radii.micro),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: context.colors.primary.withValues(alpha: 0.12),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isOverTarget ? context.colors.orange : context.colors.green,
+                ),
+                minHeight: 6,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: Spacing.stack),
+            TweenAnimationBuilder<int>(
+              tween: IntTween(begin: 0, end: completedCal),
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : Motion.deliberate,
+              curve: Motion.enter,
+              builder: (context, val, child) {
+                return Text(
+                  totalCal > 0
+                      ? '$completedMeals/$totalMeals meals  \u00b7  $val/$totalCal kcal logged'
+                      : '$completedMeals/$totalMeals meals  \u00b7  $val kcal logged',
+                  style: AppTheme.numeric(
+                    context.text.caption.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: context.colors.textMedium,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: Spacing.inline),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (!dailyLog.hasCompleteMacros)
+                  Text('Macros incomplete', style: context.text.caption),
+                if (dailyLog.hasCompleteMacros)
+                  _MacroPill(
+                    label: 'P',
+                    value: dailyLog.totalProtein,
+                    color: context.colors.green,
+                  ),
+                if (dailyLog.hasCompleteMacros)
+                  _MacroPill(
+                    label: 'C',
+                    value: dailyLog.totalCarbs,
+                    color: context.colors.orange,
+                  ),
+                if (dailyLog.hasCompleteMacros)
+                  _MacroPill(
+                    label: 'F',
+                    value: dailyLog.totalFat,
+                    color: context.colors.primary,
+                  ),
+              ],
+            ),
+            const SizedBox(height: Spacing.stack),
+            Text(
+              summary,
+              style: context.text.micro.copyWith(
+                color: context.colors.textMedium,
+              ),
+            ),
+          ],
         ),
       ),
     );
