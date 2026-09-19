@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /social_profiles/{uid} {
+      // Read allowed if user is the owner or their UID is in allowedReaders
+      allow read: if request.auth != null && (request.auth.uid == uid || ('allowedReaders' in resource.data && request.auth.uid in resource.data.allowedReaders));
+      // Write only if user is owner
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /friend_requests/{target}/requests/{from} {
+      function participant() {
+        return request.auth != null && (request.auth.uid == from || request.auth.uid == target);
+      }
+      function validIdentity() {
+        return target != from && request.resource.data.fromUid == from
+          && request.resource.data.requestId is string
+          && request.resource.data.requestId.size() > 0
+          && request.resource.data.requestId.size() <= 128;
+      }
+      function senderRequest() {
+        return request.auth != null && request.auth.uid == from && validIdentity()
+          && request.resource.data.kind == 'request' && request.resource.data.accepted == false
+          && request.resource.data.fromName is string
+          && request.resource.data.fromName.size() <= 120
+          && (request.resource.data.fromAvatar == null ||
+            (request.resource.data.fromAvatar is string && request.resource.data.fromAvatar.size() <= 2048))
+          && request.resource.data.sentAt is timestamp
+          && request.resource.data.keys().hasOnly(['kind', 'requestId', 'fromUid', 'fromName', 'fromAvatar', 'sentAt', 'accepted']);
+      }
+      function pendingSenderUpdate() {
+        // Retries must not replace an acceptance or invalidate its identity.
+        // A pending legacy request can receive its first explicit identity.
+        return senderRequest() && resource.data.fromUid == from
+          && resource.data.accepted == false
+          && (!('kind' in resource.data) || resource.data.kind == 'request')
+          && (!('requestId' in resource.data) || request.resource.data.requestId == resource.data.requestId);
+      }
+      function targetAcceptance() {
+        return request.auth != null && request.auth.uid == target && validIdentity()
+          && resource.data.fromUid == from
+          && (resource.data.accepted == false || resource.data.kind == 'request')
+          && request.resource.data.kind == 'request' && request.resource.data.accepted == true
+          && request.resource.data.acceptedAt is timestamp
+          && (!('requestId' in resource.data) || request.resource.data.requestId == resource.data.requestId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kind', 'requestId', 'accepted', 'acceptedAt']);
+      }
+      function acceptanceAcknowledgement() {
+        let original = getAfter(/databases/$(database)/documents/friend_requests/$(from)/requests/$(target));
+        return request.auth != null && request.auth.uid == from && validIdentity()
+          && request.resource.data.kind == 'acceptance' && request.resource.data.accepted == true
+          && request.resource.data.acceptedAt is timestamp
+          && request.resource.data.keys().hasOnly(['kind', 'requestId', 'fromUid', 'accepted', 'acceptedAt'])
+          && original.data.kind == 'request' && original.data.accepted == true
+          && original.data.fromUid == target
+          && original.data.requestId == request.resource.data.requestId;
+      }
+      allow read, delete: if participant();
+      // Shared IDs can receive new invitations once their private profile exists.
+      // Existence is checked by the rules without exposing profile contents.
+      allow create: if (senderRequest() &&
+        exists(/databases/$(database)/documents/social_profiles/$(target)))
+        || acceptanceAcknowledgement();
+      // A reciprocal pending request may become an acknowledgement only when
+      // its matching accepted source exists in this same atomic operation.
+      allow update: if pendingSenderUpdate() || targetAcceptance() || acceptanceAcknowledgement();
+    }
+
+    // B02 Fix: Protect private sync paths
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+    
+    // Global collections
+    match /public_meal_plans/{id} {
+      allow read: if request.auth != null;
+    }
+    match /public_workout_plans/{id} {
+      allow read: if request.auth != null;
+    }
+  }
+}

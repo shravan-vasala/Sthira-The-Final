@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "611231023306",
+    "project_id": "trufit-bodamma",
+    "storage_bucket": "trufit-bodamma.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:611231023306:android:453be9730f49ed721cf433",
+        "android_client_info": {
+          "package_name": "com.trufit.trufit_bodamma"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "611231023306-7ldpepjrtfaur71ph0lei2j0v82gga9i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.trufit.trufit_bodamma",
+            "certificate_hash": "7666711b6774a01b782d0b9adf51e60248f809a1"
+          }
+        },
+        {
+          "client_id": "611231023306-pdpsdsikt8vua5b8jo35h4fltourlmp4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfnVdSpuk2H6c4orlX9VUj6E7JMPuvzy8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "611231023306-pdpsdsikt8vua5b8jo35h4fltourlmp4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,140 @@
+00:00 +0: loading C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart
+00:00 +0: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption (setUpAll)
+00:00 +0: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption detectFormat identifies formats correctly
+00:00 +1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption detectFormat identifies formats correctly
+00:00 +2: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption detectFormat identifies formats correctly
+00:00 +3: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption detectFormat identifies formats correctly
+00:00 +4: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption detectFormat identifies formats correctly
+00:00 +5: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unencrypted valid zip works
+00:01 +6: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 encrypted backup verified successfully
+00:01 +7: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 encrypted backup verified successfully
+00:01 +8: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 encrypted backup verified successfully
+00:01 +9: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 encrypted backup verified successfully
+00:01 +10: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 encrypted backup verified successfully
+00:02 +11: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 tampered payload explicitly fails
+00:04 +12: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 tampered payload explicitly fails
+00:04 +13: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 tampered payload explicitly fails
+00:04 +14: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v2 tampered payload explicitly fails
+00:04 +15: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/providers/daily_score_provider_test.dart: (setUpAll)
+00:04 +15: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +15: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/providers/daily_score_provider_test.dart: Saving exercise log marks workout as partially/fully complete in daily score
+DateStr in test: 2023-10-02
+Log repo has Bench Press: true
+Log repo has Squat: true
+Plan dayId: monday
+Plan exercises count: 2
+00:05 +16: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +17: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +18: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +19: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +20: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +21: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption unknown TFBK version throws explicitly and prevents legacy fallback
+00:05 +22: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption v1 legacy handles graceful fallback but strictly requires ZIP structural matching
+00:05 +23: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/backup_encryption_test.dart: Backup Format Dispatch and Encryption (tearDownAll)
+00:06 +23: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Repeated attachment cancels previous listeners and does not duplicate writes
+00:06 +24: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Repeated attachment cancels previous listeners and does not duplicate writes
+00:06 +25: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Repeated attachment cancels previous listeners and does not duplicate writes
+00:06 +26: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/badge_repository_merge_test.dart: BadgeRepository Merge Policies _mergeCloudBadgeSafe: newer valid payload updates local successfully
+00:06 +27: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Account switching prevents stale in-flight events from writing to database
+00:07 +28: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Account switching prevents stale in-flight events from writing to database
+00:07 +29: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Account switching prevents stale in-flight events from writing to database
+00:07 +30: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Account switching prevents stale in-flight events from writing to database
+00:07 +31: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Account switching prevents stale in-flight events from writing to database
+00:07 +32: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Account switching prevents stale in-flight events from writing to database
+00:07 +33: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/mutation_concurrency_test.dart: MealRepository Concurrency Parallel slot overrides strictly aggregate without data loss
+00:07 +34: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Older stream event does not overwrite newer local edits in DailyLogRepository
+00:07 +35: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Older stream event does not overwrite newer local edits in DailyLogRepository
+00:07 +36: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Older stream event does not overwrite newer local edits in DailyLogRepository
+00:07 +37: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Older stream event does not overwrite newer local edits in DailyLogRepository
+00:07 +38: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection Older stream event does not overwrite newer local edits in DailyLogRepository
+00:08 +39: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/attach_sync_lifecycle_test.dart: attachSync Lifecycle and Data Protection New queue records arriving during a flush are preserved and only acknowledged batch records are deleted
+00:08 +40: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/repositories/photo_cleanup_test.dart: PhotoMealRepository Rules init does not delete 31 day old logs
+00:08 +41: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/progress/progress_screen_rendering_test.dart: ProgressScreen renders safely with all-null data (No recorded data)
+00:08 +42: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/progress/progress_screen_rendering_test.dart: ProgressScreen renders safely with all-null data (No recorded data)
+00:08 +43: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/progress/progress_screen_rendering_test.dart: ProgressScreen renders safely with all-null data (No recorded data)
+00:08 +44: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/progress/progress_screen_rendering_test.dart: ProgressScreen renders safely with all-null data (No recorded data)
+00:08 +45: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/progress/progress_screen_rendering_test.dart: ProgressScreen renders safely with all-null data (No recorded data)
+00:08 +46: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/progress/progress_screen_rendering_test.dart: ProgressScreen renders safely with all-null data (No recorded data)
+00:09 +47: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:09 +48: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:09 +48: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Global deadline terminates fallback chain across models
+AiClient: Trying model: gemini-3.7-flash (attempt 1)...
+00:09 +49: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:10 +50: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:10 +51: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:10 +52: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:10 +53: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:10 +54: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:11 +55: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:11 +56: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:11 +57: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:11 +57: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Global deadline terminates fallback chain across models
+AiClient: Trying model: gemini-3.7-flash (attempt 2)...
+AiClient: Trying model: gemini-3.6-flash (attempt 1)...
+00:12 +57: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/diagnostic_logger_test.dart: DiagnosticLogger tests Redacts Secrets natively across layers
+[INFO] Testing $1[REDACTED_PARAM] 
+[ERROR] Error fetching data 
+Error: [REDACTED_API_KEY]U
+00:12 +58: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:12 +59: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:12 +59: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/diagnostic_logger_test.dart: DiagnosticLogger tests Truncates payload sizing
+[INFO] AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA...[TRUNCATED] 
+00:12 +60: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:12 +61: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:12 +62: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:12 +63: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:12 +64: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +65: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +66: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +67: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +68: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +69: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +70: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +71: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +72: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +73: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +74: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +75: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +76: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +76: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Global deadline terminates fallback chain across models
+AiClient: Trying model: gemini-3.6-flash (attempt 2)...
+00:13 +76: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/widget_coordinator_contract_test.dart: Widget Data Contract Test JSON payload matches Kotlin expectations (production code)
+  Skip: Unavailable coverage: testing platform widget channels requires integration layer
+00:13 +76 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:13 +76 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Global deadline terminates fallback chain across models
+AiClient: Trying model: gemini-3.5-flash-lite (attempt 1)...
+00:14 +77 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +78 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +79 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +80 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +81 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +82 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +83 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +84 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:14 +85 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +86 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +87 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +88 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +89 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +90 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +91 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +92 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +93 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +94 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +95 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +96 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:15 +96 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Global deadline terminates fallback chain across models
+AiClient: Trying model: gemini-3.5-flash-lite (attempt 2)...
+AiClient: Trying model: gemini-3.1-flash-lite (attempt 1)...
+00:16 +97 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:16 +98 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:16 +99 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:16 +100 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:16 +101 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:18 +101 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Global deadline terminates fallback chain across models
+AiClient: Trying model: gemini-3.1-flash-lite (attempt 2)...
+00:18 +102 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:18 +103 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly
+00:18 +103 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/ai_resilience_test.dart: AI Resilience & Safety Tests Malformed JSON throws AiException with parse cause
+AiClient: Trying model: gemini-3.7-flash (attempt 1)...
+00:18 +104 ~1: C:/Users/sande/OneDrive/Desktop/Without Mitra/test/screens/workout/widgets/exercise_card_test.dart: ExerciseCard Widget Tests renders exercise name and reps correctly

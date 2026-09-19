@@ -1,0 +1,64 @@
+{
+  "planName": "Meal Plan",
+  "seedVersion": 1,
+  "totalCalories": 1250,
+  "meals": [
+    {
+      "name": "Awakening & Breakfast",
+      "type": "breakfast",
+      "calories": 400,
+      "items": [
+        {"name": "Warm water + lemon/amla", "quantity": "1 glass", "calories": 5},
+        {"name": "Soaked Almonds, Walnut & Seeds", "quantity": "Handful", "calories": 75},
+        {"name": "Whole Boiled Eggs or Greek Yogurt", "quantity": "2 large / 150g", "calories": 150},
+        {"name": "Sprouted Moong & Chana Chaat", "quantity": "1 bowl", "calories": 170}
+      ],
+      "suggestions": [
+        "Phase 1 (Wake-up): 1 glass warm lemon water + 4 soaked almonds, 1 walnut, 1 tsp seeds.",
+        "Phase 2 (Breakfast): 2 Boiled Eggs OR 150g Greek Yogurt + 1 bowl Sprouted Moong Chaat."
+      ]
+    },
+    {
+      "name": "Muscle Recovery & Bone Density",
+      "type": "lunch",
+      "calories": 420,
+      "items": [
+        {"name": "Cooked Rice or Phulkas", "quantity": "100-120g / 2 small", "calories": 150},
+        {"name": "Chicken / Soya / Paneer", "quantity": "120g / 40g / 80g", "calories": 160},
+        {"name": "Aaku Kura (Greens) / Veggies", "quantity": "1 katori", "calories": 70},
+        {"name": "Fresh set curd / Buttermilk", "quantity": "1 cup", "calories": 40}
+      ],
+      "suggestions": [
+        "100g–120g cooked rice OR 2 small phulkas + 120g chicken breast curry (max 1 tsp oil) + 1 large katori Aaku Kura (Palakura/Thotakura).",
+        "40g dry soya chunks OR 80g low-fat paneer/tofu curry + Kakarakaya/Bhindi/mixed vegetables + 1 glass buttermilk with roasted jeera."
+      ]
+    },
+    {
+      "name": "Evening Antioxidant Snack",
+      "type": "snack",
+      "calories": 90,
+      "items": [
+        {"name": "Guava / Papaya / Pomegranate", "quantity": "1 medium / 1 cup", "calories": 85},
+        {"name": "Green Tea", "quantity": "1 cup", "calories": 5}
+      ],
+      "suggestions": [
+        "1 medium Guava OR 1 cup Papaya / Pomegranate / Dragonfruit.",
+        "1 cup Green Tea (rich in catechins/EGCG to combat skin oxidative stress)."
+      ]
+    },
+    {
+      "name": "Light Digestion & Tissue Repair",
+      "type": "dinner",
+      "calories": 340,
+      "items": [
+        {"name": "Phulkas or Thin Ragi dosa", "quantity": "1 to 2", "calories": 140},
+        {"name": "Grilled Chicken or Soya Chunks", "quantity": "60g", "calories": 120},
+        {"name": "Dal with rajma / veggies", "quantity": "1 bowl", "calories": 80}
+      ],
+      "suggestions": [
+        "1 to 2 Phulkas + 1 bowl Dal with 50g boiled rajma/chana OR 60g grilled chicken/soya chunks + generous stir-fried veggies.",
+        "1 bowl thin Ragi dosa / light vegetable-lentil soup + light protein."
+      ]
+    }
+  ]
+}

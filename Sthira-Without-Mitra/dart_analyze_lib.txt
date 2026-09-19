@@ -1,0 +1,314 @@
+Analyzing lib...
+
+  error - main.dart:185:26 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - main.dart:201:26 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - providers\rest_timer_provider.dart:223:30 - Invalid constant value. - invalid_constant
+  error - screens\home\body_fat_entry_dialog.dart:78:26 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\meal_detail_screen.dart:182:30 - Invalid constant value. - invalid_constant
+  error - screens\home\meal_detail_screen.dart:204:30 - Invalid constant value. - invalid_constant
+  error - screens\home\meal_detail_screen.dart:949:40 - The method 'CompactButton' isn't defined for the type '_MealSlotCardState'. Try correcting the name to the name of an existing method, or defining a method named 'CompactButton'. - undefined_method
+  error - screens\home\meal_detail_screen.dart:958:40 - The method 'CompactButton' isn't defined for the type '_MealSlotCardState'. Try correcting the name to the name of an existing method, or defining a method named 'CompactButton'. - undefined_method
+  error - screens\home\meal_detail_screen.dart:1182:32 - The getter 'purple' isn't defined for the type 'AppColorsPalette'. Try importing the library that defines 'purple', correcting the name to the name of an existing getter, or defining a getter or field named 'purple'. - undefined_getter
+  error - screens\home\meal_detail_screen.dart:1252:36 - The getter 'purple' isn't defined for the type 'AppColorsPalette'. Try importing the library that defines 'purple', correcting the name to the name of an existing getter, or defining a getter or field named 'purple'. - undefined_getter
+  error - screens\home\photo_compare_screen.dart:249:67 - Invalid constant value. - invalid_constant
+  error - screens\home\photo_compare_screen.dart:249:67 - Undefined name 'Spacing'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\photo_compare_screen.dart:249:93 - Invalid constant value. - invalid_constant
+  error - screens\home\photo_compare_screen.dart:249:93 - Undefined name 'Spacing'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\photo_compare_screen.dart:288:73 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\photo_compare_screen.dart:299:77 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\photo_compare_screen.dart:321:81 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\photo_compare_screen.dart:353:12 - Expected to find ')'. - expected_token
+  error - screens\home\physique_pictures_screen.dart:276:75 - Invalid constant value. - invalid_constant
+  error - screens\home\physique_pictures_screen.dart:276:75 - Undefined name 'Spacing'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:296:56 - Invalid constant value. - invalid_constant
+  error - screens\home\physique_pictures_screen.dart:296:56 - Undefined name 'Spacing'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:296:72 - Invalid constant value. - invalid_constant
+  error - screens\home\physique_pictures_screen.dart:296:72 - Undefined name 'Spacing'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:296:87 - Invalid constant value. - invalid_constant
+  error - screens\home\physique_pictures_screen.dart:296:87 - Undefined name 'Spacing'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:364:45 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:425:47 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:449:47 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\physique_pictures_screen.dart:469:47 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\share_preview_sheet.dart:195:47 - Undefined name 'Radii'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - screens\home\water_entry_dialog.dart:114:36 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:123:43 - The method 'toInt' can't be unconditionally invoked because the receiver can be 'null'. Try making the call conditional (using '?.') or adding a null check to the target ('!'). - unchecked_use_of_nullable_value
+  error - screens\home\water_entry_dialog.dart:124:38 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:131:38 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:148:38 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:199:32 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:222:53 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:239:53 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\water_entry_dialog.dart:256:50 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\add_meal_slot_dialog.dart:140:49 - Invalid constant value. - invalid_constant
+  error - screens\home\widgets\ai_meal_suggestion_card.dart:304:7 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\ai_meal_suggestion_card.dart:304:8 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\ai_meal_suggestion_card.dart:304:8 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\ai_meal_suggestion_card.dart:304:8 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\ai_meal_suggestion_card.dart:305:5 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\ai_meal_suggestion_card.dart:305:5 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\coach_notes_card.dart:174:21 - Expected to find ')'. - expected_token
+  error - screens\home\widgets\daily_progress_grid.dart:259:12 - The method 'SurfaceCard' isn't defined for the type '_StepsCardState'. Try correcting the name to the name of an existing method, or defining a method named 'SurfaceCard'. - undefined_method
+  error - screens\home\widgets\daily_progress_grid.dart:389:7 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\daily_progress_grid.dart:389:8 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\daily_progress_grid.dart:389:8 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\daily_progress_grid.dart:389:8 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\daily_progress_grid.dart:390:5 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\daily_progress_grid.dart:390:5 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\daily_progress_grid.dart:422:12 - The method 'SurfaceCard' isn't defined for the type '_ProgressCard'. Try correcting the name to the name of an existing method, or defining a method named 'SurfaceCard'. - undefined_method
+  error - screens\home\widgets\daily_progress_grid.dart:511:7 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\daily_progress_grid.dart:511:8 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\daily_progress_grid.dart:511:8 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\daily_progress_grid.dart:511:8 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\daily_progress_grid.dart:512:5 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\daily_progress_grid.dart:512:5 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\meals_card.dart:98:46 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\meals_card.dart:105:46 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\meals_card.dart:146:35 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\meals_card.dart:185:36 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\meals_card.dart:227:45 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:140:12 - The method 'AppSheet' isn't defined for the type 'PastDaySummarySheet'. Try correcting the name to the name of an existing method, or defining a method named 'AppSheet'. - undefined_method
+  error - screens\home\widgets\past_day_summary_sheet.dart:161:32 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:178:38 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:215:44 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:219:42 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:241:38 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:340:36 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:348:7 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\past_day_summary_sheet.dart:348:8 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\past_day_summary_sheet.dart:348:8 - Expected to find ';'. - expected_token
+  error - screens\home\widgets\past_day_summary_sheet.dart:348:8 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\past_day_summary_sheet.dart:349:5 - Expected an identifier. - missing_identifier
+  error - screens\home\widgets\past_day_summary_sheet.dart:349:5 - Unexpected text ';'. Try removing the text. - unexpected_token
+  error - screens\home\widgets\past_day_summary_sheet.dart:400:36 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:454:34 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\past_day_summary_sheet.dart:458:34 - The getter 'text' isn't defined for the type 'BuildContext'. Try importing the library that defines 'text', correcting the name to the name of an existing getter, or defining a getter or field named 'text'. - undefined_getter
+  error - screens\home\widgets\week_calendar_strip.dart:155:20 - The method 'SectionHeader' isn't defined for the type '_WeekCalendarStripState'. Try correcting the name to the name of an existing method, or defining a method named 'SectionHeader'. - undefined_method
+  error - screens\onboarding\onboarding_screen.dart:350:6 - Expected to find ')'. - expected_token
+  error - screens\onboarding\pages\about_you_page.dart:165:26 - Methods can't be invoked in constant expressions. - const_eval_method_invocation
+  error - screens\onboarding\pages\welcome_page.dart:210:6 - Expected to find ')'. - expected_token
+  error - screens\onboarding\widgets\sthira_aura_background.dart:3:8 - Target of URI doesn't exist: '../../theme/app_colors.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist. - uri_does_not_exist
+  error - screens\onboarding\widgets\sthira_aura_background.dart:12:39 - The getter 'colors' isn't defined for the type 'BuildContext'. Try importing the library that defines 'colors', correcting the name to the name of an existing getter, or defining a getter or field named 'colors'. - undefined_getter
+  error - screens\onboarding\widgets\sthira_aura_background.dart:13:41 - The getter 'colors' isn't defined for the type 'BuildContext'. Try importing the library that defines 'colors', correcting the name to the name of an existing getter, or defining a getter or field named 'colors'. - undefined_getter
+  error - screens\onboarding\widgets\sthira_aura_background.dart:14:34 - The getter 'colors' isn't defined for the type 'BuildContext'. Try importing the library that defines 'colors', correcting the name to the name of an existing getter, or defining a getter or field named 'colors'. - undefined_getter
+  error - screens\progress\progress_screen.dart:161:31 - The name 'WeightEntryDialog' isn't a class. Try correcting the name to match an existing class. - creation_with_non_type
+  error - screens\progress\progress_screen.dart:718:62 - Invalid constant value. - invalid_constant
+  error - widgets\numeric_entry_sheet.dart:55:7 - The named parameter 'titleAction' isn't defined. Try correcting the name to an existing named parameter's name, or defining a named parameter with the name 'titleAction'. - undefined_named_parameter
+warning - providers\daily_score_provider.dart:233:11 - The value of the local variable 'yesterdayStr' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - providers\insights_provider.dart:155:15 - The value of the local variable 'diff' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - providers\reminders_provider.dart:154:17 - The value of the local variable 'completedCount' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - providers\sync_controller.dart:48:13 - The value of the local variable 'habitRepo' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - repositories\meal_repository.dart:1:8 - Unused import: 'package:flutter/services.dart'. Try removing the import directive. - unused_import
+warning - repositories\meal_repository.dart:92:63 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - repositories\meal_repository.dart:92:66 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - repositories\workout_repository.dart:4:8 - Unused import: 'package:flutter/services.dart'. Try removing the import directive. - unused_import
+warning - screens\home\body_fat_entry_dialog.dart:6:8 - Unused import: '../../theme/app_spacing.dart'. Try removing the import directive. - unused_import
+warning - screens\home\home_screen.dart:63:11 - The value of the local variable 'dailyScore' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\meal_detail_screen.dart:390:7 - The declaration '_MacroBar' isn't referenced. Try removing the declaration of '_MacroBar'. - unused_element
+warning - screens\home\meal_detail_screen.dart:553:45 - The member 'state' can only be used within 'package:riverpod/src/notifier.dart' or a test. - invalid_use_of_visible_for_testing_member
+warning - screens\home\meal_detail_screen.dart:553:45 - The member 'state' can only be used within instance members of subclasses of 'NotifierBase'. - invalid_use_of_protected_member
+warning - screens\home\meal_detail_screen.dart:1225:14 - The value of the local variable 'headerIcon' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\meal_detail_screen.dart:1226:11 - The value of the local variable 'headerColor' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\physique_pictures_screen.dart:30:9 - The value of the field '_picker' isn't used. Try removing the field, or using it. - unused_field
+warning - screens\home\steps_entry_dialog.dart:5:8 - Unused import: '../../theme/app_spacing.dart'. Try removing the import directive. - unused_import
+warning - screens\home\weight_entry_dialog.dart:6:8 - Unused import: '../../theme/app_spacing.dart'. Try removing the import directive. - unused_import
+warning - screens\home\widgets\add_meal_slot_dialog.dart:67:13 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\home\widgets\add_meal_slot_dialog.dart:68:11 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - screens\home\widgets\ai_meal_suggestion_card.dart:304:8 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\home\widgets\daily_progress_grid.dart:139:11 - The value of the local variable 'prefs' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\widgets\daily_progress_grid.dart:181:11 - The value of the local variable 'habitRepo' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\widgets\daily_progress_grid.dart:389:8 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\home\widgets\daily_progress_grid.dart:511:8 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\home\widgets\daily_score_sheet.dart:42:15 - The value of the local variable 'percentage' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\widgets\daily_score_sheet.dart:364:11 - The value of the local variable 'isComplete' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\widgets\day_complete_sheet.dart:9:8 - Unused import: 'package:trufit_bodamma/theme/app_typography.dart'. Try removing the import directive. - unused_import
+warning - screens\home\widgets\past_day_summary_sheet.dart:348:8 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\home\widgets\photo_calorie_scanner_sheet.dart:55:17 - The value of the field '_errorCause' isn't used. Try removing the field, or using it. - unused_field
+warning - screens\home\widgets\timer_entry_dialog.dart:6:8 - Unused import: '../../../theme/app_spacing.dart'. Try removing the import directive. - unused_import
+warning - screens\home\widgets\week_calendar_strip.dart:478:11 - The value of the local variable 'displayScore' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\home\widgets\week_calendar_strip.dart:485:11 - The value of the local variable 'borderColor' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\onboarding\onboarding_screen.dart:5:8 - Unused import: '../../theme/layout_insets.dart'. Try removing the import directive. - unused_import
+warning - screens\onboarding\onboarding_screen.dart:18:8 - Unused import: 'package:trufit_bodamma/theme/app_typography.dart'. Try removing the import directive. - unused_import
+warning - screens\profile\profile_screen.dart:20:8 - Duplicate import. Try removing all but one import of the library. - duplicate_import
+warning - screens\progress\progress_screen.dart:408:13 - The value of the local variable 'avg' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - screens\workout\log_data_dialog.dart:41:39 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\workout\log_data_dialog.dart:41:42 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - screens\workout\log_data_dialog.dart:141:39 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\workout\log_data_dialog.dart:141:42 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - screens\workout\widgets\exercise_card.dart:91:236 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\workout\widgets\exercise_card.dart:91:239 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - screens\workout\widgets\exercise_card.dart:244:49 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - screens\workout\widgets\exercise_card.dart:244:52 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - screens\workout\widgets\exercise_card.dart:372:39 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - services\ai_client.dart:176:11 - The value of the local variable 'fullOpSw' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - services\ai_client.dart:184:17 - The ability to import 'BytesBuilder' indirectly is deprecated. Try importing 'BytesBuilder' directly. - deprecated_export_use
+warning - services\ai_client.dart:234:12 - The value of the local variable 'lastErrorMsg' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - services\ai_client.dart:402:12 - The value of the local variable 'reason' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - share\daily_share_layout.dart:6:8 - Unused import: '../theme/layout_insets.dart'. Try removing the import directive. - unused_import
+warning - theme\app_theme.dart:442:11 - The value of the local variable 'sectionLabel' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - theme\app_theme.dart:443:11 - The value of the local variable 'eyebrow' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - theme\layout_insets.dart:1:8 - Unused import: 'package:flutter/material.dart'. Try removing the import directive. - unused_import
+warning - utils\exercise_log_save.dart:19:69 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - utils\exercise_log_save.dart:19:72 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+warning - widgets\numeric_entry_sheet.dart:4:8 - Unused import: '../theme/layout_insets.dart'. Try removing the import directive. - unused_import
+warning - widgets\setup_sheets.dart:37:70 - Dead code. Try removing the code, or fixing the code before it so that it can be reached. - dead_code
+warning - widgets\setup_sheets.dart:37:73 - The left operand can't be null, so the right operand is never executed. Try removing the operator and the right operand. - dead_null_aware_expression
+   info - providers\coach_note_notifier.dart:191:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - providers\daily_log_notifier.dart:222:12 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - providers\daily_score_provider.dart:358:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - providers\reminders_provider.dart:280:15 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - repositories\badge_repository.dart:140:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\body_stats_repository.dart:32:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\coach_note_repository.dart:32:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\daily_log_repository.dart:133:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\daily_log_repository.dart:162:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\daily_log_repository.dart:219:28 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:222:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:222:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:224:22 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:224:22 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:227:22 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:227:22 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:232:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:232:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:234:27 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:234:27 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:237:22 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\daily_log_repository.dart:237:22 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\exercise_log_repository.dart:37:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\exercise_log_repository.dart:66:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\exercise_log_repository.dart:86:32 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\habit_repository.dart:60:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\habit_repository.dart:80:32 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\habit_repository.dart:105:32 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\habit_repository.dart:153:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\habit_repository.dart:183:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\meal_repository.dart:222:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\meal_repository.dart:258:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\meal_repository.dart:290:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\meal_repository.dart:386:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\meal_repository.dart:411:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\meal_repository.dart:420:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\profile_repository.dart:61:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\workout_repository.dart:71:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\workout_repository.dart:96:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\workout_repository.dart:105:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - repositories\workout_repository.dart:177:40 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - repositories\workout_repository.dart:235:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\body_fat_entry_dialog.dart:92:39 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\photo_compare_screen.dart:127:29 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\home\photo_compare_screen.dart:132:33 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\home\sleep_entry_dialog.dart:135:43 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\sleep_entry_dialog.dart:146:41 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\steps_entry_dialog.dart:109:37 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\steps_entry_dialog.dart:117:37 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\steps_entry_dialog.dart:125:35 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\weight_entry_dialog.dart:101:39 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\home\widgets\add_progress_photo_sheet.dart:115:14 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\widgets\ai_meal_suggestion_card.dart:75:17 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\widgets\ai_meal_suggestion_card.dart:305:6 - Unnecessary empty statement. Try removing the empty statement or restructuring the code. - empty_statements
+   info - screens\home\widgets\daily_progress_grid.dart:390:6 - Unnecessary empty statement. Try removing the empty statement or restructuring the code. - empty_statements
+   info - screens\home\widgets\daily_progress_grid.dart:512:6 - Unnecessary empty statement. Try removing the empty statement or restructuring the code. - empty_statements
+   info - screens\home\widgets\habits_card.dart:296:14 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\widgets\habits_card.dart:308:16 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\widgets\habits_card.dart:323:14 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\widgets\habits_card.dart:334:14 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\home\widgets\past_day_summary_sheet.dart:349:6 - Unnecessary empty statement. Try removing the empty statement or restructuring the code. - empty_statements
+   info - screens\home\widgets\week_calendar_strip.dart:216:37 - 'textScaleFactorOf' is deprecated and shouldn't be used. Use textScalerOf instead. Use of textScaleFactor was deprecated in preparation for the upcoming nonlinear text scaling support. This feature was deprecated after v3.12.0-2.0.pre. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\meals\widgets\plate_calculator_sheet.dart:150:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\meals\widgets\plate_calculator_sheet.dart:152:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\onboarding\onboarding_screen.dart:60:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\onboarding\onboarding_screen.dart:123:24 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\onboarding\onboarding_screen.dart:124:25 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\onboarding\onboarding_screen.dart:133:24 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\onboarding\onboarding_screen.dart:323:35 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\profile\profile_screen.dart:263:19 - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\profile\profile_screen.dart:282:21 - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\profile\profile_screen.dart:293:32 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\profile\profile_screen.dart:310:30 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\profile\profile_screen.dart:326:19 - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\profile\profile_screen.dart:694:5 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\profile\profile_screen.dart:910:52 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - screens\profile\profile_screen.dart:1516:38 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\profile\profile_screen.dart:1520:25 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\profile\profile_screen.dart:1521:27 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\profile\profile_screen.dart:1853:31 - 'Share' is deprecated and shouldn't be used. Use SharePlus instead. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\profile\profile_screen.dart:1853:37 - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\progress\progress_screen.dart:50:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:99:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:101:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:103:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:105:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:111:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:113:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:115:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:117:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:321:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:554:7 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\progress_screen.dart:677:23 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - screens\progress\weekly_summary_screen.dart:304:17 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\weekly_summary_screen.dart:545:23 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\weekly_summary_screen.dart:864:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\progress\weekly_summary_screen.dart:888:30 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\progress\widgets\shared_chart_card.dart:352:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - screens\social\connect_screen.dart:132:40 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\social\connect_screen.dart:135:40 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - screens\social\connect_screen.dart:215:15 - 'Share' is deprecated and shouldn't be used. Use SharePlus instead. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\social\connect_screen.dart:215:21 - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - screens\workout\workout_screen.dart:498:5 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - screens\workout\workout_screen.dart:499:7 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+   info - screens\workout\youtube_player_screen.dart:42:18 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\ai_client.dart:302:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:317:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:366:17 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:513:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:527:22 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\ai_client.dart:543:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:548:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:584:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:602:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:682:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:703:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\ai_client.dart:708:9 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\backup_service.dart:143:17 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\backup_service.dart:144:17 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\backup_service.dart:158:23 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\backup_service.dart:173:23 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\backup_service.dart:178:17 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\backup_service.dart:527:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:529:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:531:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:533:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:535:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:537:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:539:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:541:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:543:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:545:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:547:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:549:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:551:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:553:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:555:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\backup_service.dart:559:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\csv_export_service.dart:69:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\csv_export_service.dart:132:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\gemini_food_service.dart:286:15 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\gemini_food_service.dart:288:15 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\gemini_food_service.dart:290:15 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\gemini_food_service.dart:292:15 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\gemini_food_service.dart:390:17 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - services\gemini_food_service.dart:391:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - services\gemini_food_service.dart:392:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - services\gemini_food_service.dart:393:15 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - services\gemini_food_service.dart:394:13 - Method invocation or property access on a 'dynamic' target. Try giving the target a type. - avoid_dynamic_calls
+   info - services\gemini_food_service.dart:600:17 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\notification_service.dart:67:9 - Missing an 'await' for the 'Future' computed by this expression. Try adding an 'await' or wrapping the expression with 'unawaited'. - unawaited_futures
+   info - services\progress_aggregation_service.dart:87:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\progress_aggregation_service.dart:97:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - services\progress_aggregation_service.dart:109:11 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - share\weekly_share_layout.dart:288:13 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - widgets\section_header.dart:66:11 - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?'. - use_null_aware_elements
+   info - widgets\setup_sheets.dart:361:38 - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check. - use_build_context_synchronously
+
+310 issues found.

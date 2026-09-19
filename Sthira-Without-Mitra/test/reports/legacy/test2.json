@@ -1,0 +1,11 @@
+{"protocolVersion":"0.1.1","runnerVersion":null,"pid":14252,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/csv_export_service_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading C:/Users/sande/OneDrive/Desktop/Without Mitra/test/services/csv_export_service_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":0}
+{"count":1,"time":4,"type":"allSuites"}
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":1450}
+{"group":{"id":2,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":1452}
+{"group":{"id":3,"suiteID":0,"parentID":2,"name":"Adversarial CSV Strings","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":16,"column":3,"url":"file:///C:/Users/sande/OneDrive/Desktop/Without%20Mitra/test/services/csv_export_service_test.dart"},"type":"group","time":1453}
+{"test":{"id":4,"name":"Adversarial CSV Strings Spreadsheet formula injection properly escapes strings regardless of leading space","suiteID":0,"groupIDs":[2,3],"metadata":{"skip":false,"skipReason":null},"line":33,"column":5,"url":"file:///C:/Users/sande/OneDrive/Desktop/Without%20Mitra/test/services/csv_export_service_test.dart"},"type":"testStart","time":1453}
+{"testID":4,"error":"Expected: '\\'=SUM(A1:A2)'\n  Actual: '\\'$value'\n   Which: is different.\n          Expected: '=SUM(A1:A2 ...\n            Actual: '$value\n                     ^\n           Differ at offset 1\n","stackTrace":"package:matcher                                     expect\npackage:flutter_test/src/widget_tester.dart 473:18  expect\ntest\\services\\csv_export_service_test.dart 34:7     main.<fn>.<fn>\n","isFailure":true,"type":"error","time":1484}
+{"testID":4,"result":"failure","skipped":false,"hidden":false,"type":"testDone","time":1484}
+{"success":false,"type":"done","time":1509}

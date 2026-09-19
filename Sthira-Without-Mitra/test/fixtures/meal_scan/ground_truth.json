@@ -1,0 +1,41 @@
+[
+  {
+    "id": "synthetic_idli_01",
+    "images": ["idli_chutney_1789715769511.jpg"],
+    "weighed": false,
+    "items": [
+      {"name": "Idli", "grams": 100, "kcal": 145, "protein_g": 5.0, "carbs_g": 30.0, "fat_g": 0.5},
+      {"name": "Coconut Chutney", "grams": 40, "kcal": 100, "protein_g": 1.5, "carbs_g": 4.0, "fat_g": 8.0}
+    ],
+    "total_kcal": 245,
+    "notes": "2 idlis and a small bowl of coconut chutney. Synthetic image, standard nutrition estimation."
+  },
+  {
+    "id": "synthetic_dosa_01",
+    "images": ["dosa_1789715790389.jpg"],
+    "weighed": false,
+    "items": [
+      {"name": "Masala Dosa", "grams": 150, "kcal": 350, "protein_g": 8.0, "carbs_g": 45.0, "fat_g": 15.0},
+      {"name": "Sambar", "grams": 100, "kcal": 75, "protein_g": 3.0, "carbs_g": 12.0, "fat_g": 2.0},
+      {"name": "Coconut Chutney", "grams": 40, "kcal": 100, "protein_g": 1.5, "carbs_g": 4.0, "fat_g": 8.0}
+    ],
+    "total_kcal": 525,
+    "notes": "Large masala dosa with sambar and chutney. Synthetic image, standard nutrition estimation."
+  },
+  {
+    "id": "synthetic_thali_01",
+    "images": ["south_indian_thali_1789715809036.jpg"],
+    "weighed": false,
+    "items": [
+      {"name": "White Rice", "grams": 200, "kcal": 260, "protein_g": 5.0, "carbs_g": 56.0, "fat_g": 0.5},
+      {"name": "Sambar", "grams": 80, "kcal": 60, "protein_g": 2.5, "carbs_g": 9.5, "fat_g": 1.5},
+      {"name": "Rasam", "grams": 80, "kcal": 40, "protein_g": 1.0, "carbs_g": 6.0, "fat_g": 1.0},
+      {"name": "Poriyal", "grams": 60, "kcal": 70, "protein_g": 2.0, "carbs_g": 8.0, "fat_g": 3.5},
+      {"name": "Curd", "grams": 80, "kcal": 78, "protein_g": 3.5, "carbs_g": 4.0, "fat_g": 5.0},
+      {"name": "Papad", "grams": 15, "kcal": 45, "protein_g": 2.0, "carbs_g": 8.0, "fat_g": 0.5},
+      {"name": "Parotta", "grams": 80, "kcal": 250, "protein_g": 5.0, "carbs_g": 32.0, "fat_g": 11.0}
+    ],
+    "total_kcal": 803,
+    "notes": "Full South Indian thali. Synthetic image, standard nutrition estimation."
+  }
+]

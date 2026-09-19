@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root_standard" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/widget_bg" android:orientation="vertical" android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_vertical">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="TODAY" android:textColor="@color/sthira_peach" android:fontFamily="@font/general_sans_semibold" android:textSize="11sp" android:letterSpacing="0.1" android:maxLines="2" android:ellipsize="end" />
+        <TextView android:id="@+id/tv_updated_at" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Updated --:--" android:textColor="@color/sthira_text_secondary" android:fontFamily="@font/general_sans" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:baselineAligned="false">
+        <LinearLayout android:id="@+id/widget_steps_area" android:layout_width="0dp" android:layout_weight="1.2" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="16dp">
+            <TextView android:id="@+id/tv_steps_value" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/sthira_text_main" android:fontFamily="@font/cabinet_grotesk_extrabold" android:textSize="32sp" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="16sp" android:autoSizeMaxTextSize="32sp" android:autoSizeStepGranularity="1sp" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="2dp" android:gravity="center_vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="steps" android:textColor="@color/sthira_text_secondary" android:fontFamily="@font/general_sans" android:textSize="13sp" android:maxLines="2" android:ellipsize="end" />
+                <TextView android:id="@+id/tv_steps_goal" android:layout_width="match_parent" android:layout_height="wrap_content" android:text=" / --" android:textColor="@color/sthira_text_secondary" android:fontFamily="@font/general_sans" android:textSize="13sp" android:visibility="gone" android:maxLines="2" android:ellipsize="end" />
+            </LinearLayout>
+            <ProgressBar android:id="@+id/pb_steps" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="12dp" android:max="100" android:progress="0" android:progressDrawable="@drawable/widget_progress_layer_list" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+            <LinearLayout android:id="@+id/widget_meals_area" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/widget_tile_bg" android:orientation="horizontal" android:paddingHorizontal="12dp" android:paddingVertical="10dp" android:gravity="center_vertical">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                    <TextView android:id="@+id/tv_meals_value" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="-/-" android:textColor="@color/sthira_text_main" android:fontFamily="@font/general_sans_semibold" android:textSize="15sp" android:maxLines="2" android:ellipsize="end" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Meals logged" android:textColor="@color/sthira_text_secondary" android:fontFamily="@font/general_sans" android:textSize="11sp" android:maxLines="2" android:ellipsize="end" />
+                </LinearLayout>
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_chevron_right" android:importantForAccessibility="no" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/widget_habits_area" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/widget_tile_bg" android:layout_marginTop="8dp" android:orientation="horizontal" android:paddingHorizontal="12dp" android:paddingVertical="10dp" android:gravity="center_vertical">
+                <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                    <TextView android:id="@+id/tv_habits_value" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="-/-" android:textColor="@color/sthira_text_main" android:fontFamily="@font/general_sans_semibold" android:textSize="15sp" android:maxLines="2" android:ellipsize="end" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Habits done" android:textColor="@color/sthira_text_secondary" android:fontFamily="@font/general_sans" android:textSize="11sp" android:maxLines="2" android:ellipsize="end" />
+                </LinearLayout>
+                <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_chevron_right" android:importantForAccessibility="no" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+</LinearLayout>

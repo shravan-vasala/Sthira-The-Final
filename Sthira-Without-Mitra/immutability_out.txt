@@ -1,0 +1,20 @@
+00:00 +0: loading C:/Users/sande/OneDrive/Desktop/Without Mitra/test/immutability_test.dart
+00:00 +0: SEED-01 Expert Content Immutability Meal Plan seed content has not been mutated
+00:00 +0 -1: SEED-01 Expert Content Immutability Meal Plan seed content has not been mutated [E]
+  Expected: 'bb7c25f8cb896e1f7d513fb6b4c47297a5200ef4e576f9f46c286c83be13a208'
+    Actual: 'a711dc0940793ca4db12d858c40865090e2f1191b66b6f6a32f8c09d93bc33dd'
+     Which: is different.
+            Expected: bb7c25f8cb ...
+              Actual: a711dc0940 ...
+                      ^
+             Differ at offset 0
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\immutability_test.dart 60:7                    main.<fn>.<fn>
+  
+00:00 +0 -1: SEED-01 Expert Content Immutability Workout Plan seed content has not been mutated
+00:00 +1 -1: Some tests failed.
+
+Failing tests:
+  C:/Users/sande/OneDrive/Desktop/Without Mitra/test/immutability_test.dart: SEED-01 Expert Content Immutability Meal Plan seed content has not been mutated

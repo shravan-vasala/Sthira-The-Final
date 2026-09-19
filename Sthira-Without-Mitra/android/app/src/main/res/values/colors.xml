@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="launch_surface">#FAF2EA</color>
+    <color name="sthira_forest">#0F1513</color>
+    <color name="sthira_tile">#171F1B</color>
+    <color name="sthira_peach">#E29B65</color>
+    <color name="sthira_text_main">#EFE8EA</color>
+    <color name="sthira_text_secondary">#B5A5AA</color>
+    <color name="sthira_peach_muted">#40E29B65</color>
+    <color name="sthira_tile_highlight">#1C2622</color>
+    <color name="sthira_transparent">#00000000</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

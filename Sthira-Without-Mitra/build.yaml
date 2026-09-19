@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      riverpod_generator:
+        generate_for:
+          - lib/providers/habit_providers.dart
+          - lib/providers/workout_providers.dart
+          - lib/providers/meal_providers.dart
+          - lib/providers/profile_providers.dart

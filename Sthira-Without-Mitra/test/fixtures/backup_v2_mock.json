@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "timestamp": "2026-09-13T00:00:00.000Z",
+  "data": {
+    "profile": {
+      "id": "mock_user",
+      "name": "Test User",
+      "targetCalories": 2000
+    },
+    "dailyLogs": [
+      {
+        "id": "log_1",
+        "date": "2026-09-13",
+        "steps": 10000
+      }
+    ]
+  },
+  "media_references": [
+    "profile_photos/mock_photo.jpg"
+  ]
+}

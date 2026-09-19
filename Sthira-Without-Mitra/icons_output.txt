@@ -1,0 +1,13 @@
+Exceptions (bare icons):
+resolve: found in 7 places
+options: found in 3 places
+add: found in 2 places
+isNotEmpty: found in 2 places
+map: found in 1 places
+normalize: found in 3 places
+_: found in 2 places
+
+arrow_back_ios variations:
+arrow_back_rounded: found in 18 places
+chevron_right_rounded: found in 14 places
+chevron_left_rounded: found in 3 places
