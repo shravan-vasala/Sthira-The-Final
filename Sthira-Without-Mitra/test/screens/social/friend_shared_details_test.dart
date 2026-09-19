@@ -13,6 +13,7 @@ import 'package:trufit_bodamma/services/social_relationship_coordinator.dart';
 import 'package:trufit_bodamma/screens/social/widgets/friend_details_sheet.dart';
 import 'package:trufit_bodamma/screens/social/widgets/friend_status_card.dart';
 import 'package:trufit_bodamma/theme/app_theme.dart';
+import 'package:trufit_bodamma/theme/app_spacing.dart';
 
 final _now = StateProvider<DateTime>((ref) => DateTime(2026, 9, 19, 12));
 final _friend = Friend()
@@ -94,6 +95,7 @@ void main() {
     _Social? service,
     _Friends? repository,
     DateTime? snapshotTime,
+    bool settle = true,
   }) async {
     final scope = ProviderContainer(
       overrides: [
@@ -141,14 +143,18 @@ void main() {
           ),
           home: Scaffold(
             body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Spacing.screen),
               child: FriendStatusCard(friend: _friend),
             ),
           ),
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
     return scope;
   }
 
@@ -308,6 +314,69 @@ void main() {
       await tester.pumpAndSettle();
       expect(subscriptions, 2);
       expect(find.text('No recent activity.'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Narrow friend tile keeps all stats readable and details reachable',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 740);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await show(tester, profile: _profile(steps: 123456));
+      expect(find.text(_friend.name), findsOneWidget);
+      expect(find.text('123,456'), findsOneWidget);
+      expect(find.text('Completed workouts'), findsOneWidget);
+      expect(find.text('Step-goal streak'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('View details'));
+      await tester.tap(find.text('View details'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FriendDetailsSheet), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Narrow large-text friend tile recovers from loading and unavailable activity',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 740);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final changes = StreamController<SocialProfile?>();
+      addTearDown(changes.close);
+      var attempts = 0;
+      await show(
+        tester,
+        scale: 2,
+        settle: false,
+        stream: () {
+          attempts++;
+          return attempts == 1
+              ? changes.stream
+              : Stream.value(_profile(steps: 123456));
+        },
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      changes.addError(
+        FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Retry'));
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(attempts, 2);
+      expect(find.text('123,456'), findsOneWidget);
+      expect(find.text(_friend.name), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('View details'));
+      await tester.tap(find.text('View details'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FriendDetailsSheet), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 

@@ -14,6 +14,7 @@ import 'package:trufit_bodamma/repositories/friend_repository.dart';
 import 'package:trufit_bodamma/services/social_sync_service.dart';
 import 'package:trufit_bodamma/screens/social/connect_screen.dart';
 import 'package:trufit_bodamma/screens/social/social_feed_screen.dart';
+import 'package:trufit_bodamma/screens/social/widgets/friend_avatar.dart';
 import 'package:trufit_bodamma/theme/app_theme.dart';
 
 const myUid = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -97,24 +98,29 @@ class _Social implements SocialSyncService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-SocialProfile profile(String uid, {int steps = 0, bool recorded = true}) =>
-    SocialProfile(
-      uid: uid,
-      name: uid == myUid ? 'Sister' : 'Alexandra Catherine',
-      todaySteps: steps,
-      todayWorkouts: 0,
-      currentStreak: 0,
-      weeklySteps: steps,
-      weeklyWorkouts: 0,
-      lastUpdatedAt: now,
-      statsDate: '2026-09-19',
-      weekStartDate: '2026-09-14',
-      hasStepsRecord: recorded,
-      weeklyStepsRecordedDays: recorded ? 1 : 0,
-      todayScore: recorded ? 50 : null,
-      weekScore: recorded ? 50 : null,
-      weekScoreRecordedDays: recorded ? 1 : 0,
-    );
+SocialProfile profile(
+  String uid, {
+  int steps = 0,
+  int score = 50,
+  String? name,
+  bool recorded = true,
+}) => SocialProfile(
+  uid: uid,
+  name: name ?? (uid == myUid ? 'Sister' : 'Alexandra Catherine'),
+  todaySteps: steps,
+  todayWorkouts: 0,
+  currentStreak: 0,
+  weeklySteps: steps,
+  weeklyWorkouts: 0,
+  lastUpdatedAt: now,
+  statsDate: '2026-09-19',
+  weekStartDate: '2026-09-14',
+  hasStepsRecord: recorded,
+  weeklyStepsRecordedDays: recorded ? 1 : 0,
+  todayScore: recorded ? score : null,
+  weekScore: recorded ? score : null,
+  weekScoreRecordedDays: recorded ? 1 : 0,
+);
 Friend friend(String uid, {String name = 'Alexandra Catherine'}) => Friend()
   ..uid = uid
   ..name = name
@@ -127,13 +133,16 @@ Future<void> showSocial(
   _Auth? auth,
   bool connect = false,
   double scale = 1,
+  double width = 320,
+  double? contentWidth,
+  SocialProfile? mine,
   bool light = false,
   List<Friend> friends = const [],
   Stream<List<Friend>> Function()? friendsStream,
   Stream<List<Map<String, dynamic>>> Function()? requests,
   Map<String, SocialProfile?> profiles = const {},
 }) async {
-  tester.view.physicalSize = const Size(320, 844);
+  tester.view.physicalSize = Size(width, 844);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -164,7 +173,7 @@ Future<void> showSocial(
           (ref) => requests?.call() ?? Stream.value([]),
         ),
         mySocialProfileProvider.overrideWithValue(
-          profile(myUid, recorded: false),
+          mine ?? profile(myUid, recorded: false),
         ),
         for (final person in friends)
           friendProfileStreamProvider(
@@ -179,7 +188,12 @@ Future<void> showSocial(
             textScaler: TextScaler.linear(scale),
             disableAnimations: true,
           ),
-          child: child!,
+          child: contentWidth == null
+              ? child!
+              : Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(width: contentWidth, child: child!),
+                ),
         ),
       ),
     ),
@@ -525,4 +539,208 @@ void main() {
     expect(find.text('View friend details'), findsOneWidget);
     expect(find.textContaining('Waiting for your friend'), findsNothing);
   });
+  testWidgets('distinct leaders remain tappable inside the podium at 360px', (
+    tester,
+  ) async {
+    final people = [
+      friend('asha', name: 'Asha'),
+      friend('bela', name: 'Bela'),
+      friend('cora', name: 'Cora'),
+      friend('devi', name: 'Devi'),
+    ];
+    await showSocial(
+      tester,
+      service: _Social(),
+      repository: _Friends(),
+      width: 360,
+      mine: profile(myUid, score: 40),
+      friends: people,
+      profiles: {
+        for (var i = 0; i < people.length; i++)
+          people[i].uid: profile(
+            people[i].uid,
+            name: people[i].name,
+            score: 95 - i * 10,
+          ),
+      },
+    );
+    await tester.tap(find.text('Leaderboard'));
+    await tester.pumpAndSettle();
+    Finder avatar(String name) => find.byWidgetPredicate(
+      (widget) => widget is FriendAvatar && widget.name == name,
+    );
+    final semantics = tester.ensureSemantics();
+    try {
+      final leader = tester.getSemantics(
+        find.bySemanticsLabel('Rank 1, Asha, 95 out of 100'),
+      );
+      expect(
+        leader,
+        matchesSemantics(
+          label: 'Rank 1, Asha, 95 out of 100',
+          isButton: true,
+          isFocusable: true,
+          hasTapAction: true,
+          hasFocusAction: true,
+        ),
+      );
+    } finally {
+      semantics.dispose();
+    }
+    final first = tester.getRect(avatar('Asha'));
+    final second = tester.getRect(avatar('Bela'));
+    final third = tester.getRect(avatar('Cora'));
+    expect(first.width, greaterThan(second.width));
+    expect(first.center.dx, greaterThan(second.center.dx));
+    expect(first.center.dx, lessThan(third.center.dx));
+    expect(find.text('Today’s score'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(avatar('Asha'));
+    await tester.tap(avatar('Asha'));
+    await tester.pumpAndSettle();
+    expect(find.text('Friend details'), findsOneWidget);
+    expect(find.text('Daily score'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close friend details'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Devi'));
+    await tester.tap(find.text('Devi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Friend details'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final scores in [
+    [90, 90, 70],
+    [90, 80, 70, 70],
+  ]) {
+    testWidgets('tied podium positions receive equal row emphasis $scores', (
+      tester,
+    ) async {
+      final people = [
+        for (var i = 0; i < scores.length; i++)
+          friend('person-$i', name: 'Friend $i'),
+      ];
+      await showSocial(
+        tester,
+        service: _Social(),
+        repository: _Friends(),
+        width: 390,
+        friends: people,
+        profiles: {
+          for (var i = 0; i < people.length; i++)
+            people[i].uid: profile(
+              people[i].uid,
+              name: people[i].name,
+              score: scores[i],
+            ),
+        },
+      );
+      await tester.tap(find.text('Leaderboard'));
+      await tester.pumpAndSettle();
+      final portraits = tester
+          .widgetList<FriendAvatar>(find.byType(FriendAvatar))
+          .toList();
+      expect(portraits.length, people.length);
+      final bounds = [
+        for (final person in people)
+          tester.getRect(
+            find.byWidgetPredicate(
+              (widget) => widget is FriendAvatar && widget.name == person.name,
+            ),
+          ),
+      ];
+      expect(bounds.map((rect) => rect.width).toSet().length, 1);
+      for (var i = 1; i < bounds.length; i++) {
+        expect(bounds[i].top, greaterThanOrEqualTo(bounds[i - 1].bottom));
+      }
+      expect(
+        find.text(scores.first == scores[1] ? '#1' : '#3'),
+        findsNWidgets(2),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('a narrow parent uses rows even on a wider viewport', (
+    tester,
+  ) async {
+    final people = [
+      for (var i = 0; i < 3; i++) friend('person-$i', name: 'Friend $i'),
+    ];
+    await showSocial(
+      tester,
+      service: _Social(),
+      repository: _Friends(),
+      width: 480,
+      contentWidth: 320,
+      friends: people,
+      profiles: {
+        for (var i = 0; i < 3; i++)
+          people[i].uid: profile(
+            people[i].uid,
+            name: people[i].name,
+            score: 90 - i * 10,
+          ),
+      },
+    );
+    await tester.tap(find.text('Leaderboard'));
+    await tester.pumpAndSettle();
+    final portraits = [
+      for (final person in people)
+        tester.getRect(
+          find.byWidgetPredicate(
+            (widget) => widget is FriendAvatar && widget.name == person.name,
+          ),
+        ),
+    ];
+    expect(portraits.map((rect) => rect.width).toSet().length, 1);
+    expect(portraits[1].top, greaterThan(portraits[0].bottom));
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final light in [false, true]) {
+    testWidgets(
+      'populated rankings and filters stay usable at 320/200 light=$light',
+      (tester) async {
+        final people = [
+          for (var i = 0; i < 3; i++)
+            friend('person-$i', name: 'Alexandra Catherine Vasala $i'),
+        ];
+        await showSocial(
+          tester,
+          service: _Social(),
+          repository: _Friends(),
+          scale: 2,
+          light: light,
+          friends: people,
+          profiles: {
+            for (var i = 0; i < 3; i++)
+              people[i].uid: profile(
+                people[i].uid,
+                name: people[i].name,
+                score: 90 - i * 10,
+                steps: 123456 - i * 1000,
+              ),
+          },
+        );
+        await tester.ensureVisible(find.text('Leaderboard'));
+        await tester.tap(find.text('Leaderboard'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Week'));
+        await tester.pumpAndSettle();
+        expect(find.text('Weekly average score'), findsOneWidget);
+        await tester.tap(find.text('Steps'));
+        await tester.pumpAndSettle();
+        expect(find.text('This week’s steps'), findsOneWidget);
+        expect(find.text('123,456 steps'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.ensureVisible(find.text(people.first.name));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(people.first.name));
+        await tester.pumpAndSettle();
+        expect(find.text('Friend details'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }

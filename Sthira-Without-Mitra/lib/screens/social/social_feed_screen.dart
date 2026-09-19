@@ -11,6 +11,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/layout_insets.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/surface_card.dart';
 import 'widgets/friend_status_card.dart';
 import 'widgets/friend_avatar.dart';
 import 'widgets/friend_details_sheet.dart';
@@ -527,111 +528,185 @@ class _LeaderboardTabState extends ConsumerState<_LeaderboardTab> {
         i > 0 && ranked[i].value == ranked[i - 1].value ? ranks.last : i + 1,
       );
     }
-    final usePodium =
-        ranked.length >= 3 &&
-        MediaQuery.sizeOf(context).width >= 360 &&
-        MediaQuery.textScalerOf(context).scale(14) <= 18;
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        Spacing.screen,
-        Spacing.section,
-        Spacing.screen,
-        shellScrollBottomPadding(context),
-      ),
-      children: [
-        Wrap(
-          spacing: Spacing.stack,
-          runSpacing: Spacing.stack,
-          alignment: WrapAlignment.center,
+    // Equal ranks at the top or across the third-place cutoff use equal rows.
+    final podiumRanks = ranks.take(4);
+    final hasPodiumTie = podiumRanks.toSet().length != podiumRanks.length;
+    final title = _metric == LeaderboardMetric.score
+        ? _period == LeaderboardPeriod.week
+              ? 'Weekly average score'
+              : 'Today’s score'
+        : _period == LeaderboardPeriod.week
+        ? 'This week’s steps'
+        : 'Today’s steps';
+    final explanation = _metric == LeaderboardMetric.score
+        ? _period == LeaderboardPeriod.week
+              ? 'Average score across recorded days, Monday to today. Each person follows their own plan.'
+              : 'Today’s plan and logging score. Each person follows their own plan.'
+        : _period == LeaderboardPeriod.week
+        ? 'Recorded steps from Monday to today.'
+        : 'Steps shared for today.';
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final podiumWidth =
+            constraints.maxWidth - 2 * Spacing.screen - 2 * Spacing.cardPad;
+        final usePodium =
+            ranked.length >= 3 &&
+            !hasPodiumTie &&
+            podiumWidth >= 280 &&
+            MediaQuery.textScalerOf(context).scale(14) <= 18;
+        final hasRemaining =
+            ranked.length > 3 || myValue == null || unranked.isNotEmpty;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            Spacing.screen,
+            Spacing.section,
+            Spacing.screen,
+            shellScrollBottomPadding(context),
+          ),
           children: [
-            SegmentedButton<LeaderboardPeriod>(
-              segments: const [
-                ButtonSegment(
-                  value: LeaderboardPeriod.today,
-                  label: Text('Today'),
+            Wrap(
+              spacing: Spacing.stack,
+              runSpacing: Spacing.stack,
+              alignment: WrapAlignment.center,
+              children: [
+                SegmentedButton<LeaderboardPeriod>(
+                  segments: const [
+                    ButtonSegment(
+                      value: LeaderboardPeriod.today,
+                      label: Text('Today'),
+                    ),
+                    ButtonSegment(
+                      value: LeaderboardPeriod.week,
+                      label: Text('Week'),
+                    ),
+                  ],
+                  selected: {_period},
+                  onSelectionChanged: (value) =>
+                      setState(() => _period = value.first),
                 ),
-                ButtonSegment(
-                  value: LeaderboardPeriod.week,
-                  label: Text('Week'),
+                SegmentedButton<LeaderboardMetric>(
+                  segments: const [
+                    ButtonSegment(
+                      value: LeaderboardMetric.score,
+                      label: Text('Score'),
+                    ),
+                    ButtonSegment(
+                      value: LeaderboardMetric.steps,
+                      label: Text('Steps'),
+                    ),
+                  ],
+                  selected: {_metric},
+                  onSelectionChanged: (value) =>
+                      setState(() => _metric = value.first),
                 ),
               ],
-              selected: {_period},
-              onSelectionChanged: (value) =>
-                  setState(() => _period = value.first),
             ),
-            SegmentedButton<LeaderboardMetric>(
-              segments: const [
-                ButtonSegment(
-                  value: LeaderboardMetric.score,
-                  label: Text('Score'),
-                ),
-                ButtonSegment(
-                  value: LeaderboardMetric.steps,
-                  label: Text('Steps'),
-                ),
-              ],
-              selected: {_metric},
-              onSelectionChanged: (value) =>
-                  setState(() => _metric = value.first),
-            ),
-          ],
-        ),
-        const SizedBox(height: Spacing.section),
-        Text(
-          _metric == LeaderboardMetric.score
-              ? _period == LeaderboardPeriod.week
-                    ? 'Average score across recorded days, Monday to today. Each person follows their own plan.'
-                    : 'Today’s plan and logging score. Each person follows their own plan.'
-              : _period == LeaderboardPeriod.week
-              ? 'Recorded steps from Monday to today.'
-              : 'Steps shared for today.',
-          style: context.text.caption.copyWith(
-            color: context.colors.textMedium,
-          ),
-        ),
-        const SizedBox(height: Spacing.section),
-        if (friends.isEmpty) ...[
-          Text('Invite someone to join you', style: context.text.cardTitle),
-          const SizedBox(height: Spacing.stack),
-          PrimaryButton(
-            label: 'Connect with friends',
-            onPressed: () => context.push('/social/connect'),
-          ),
-          const SizedBox(height: Spacing.section),
-        ],
-        if (usePodium) ...[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final index in [1, 0, 2])
-                Expanded(
-                  child: _podium(ranked[index], ranks[index], index == 0),
-                ),
+            const SizedBox(height: Spacing.section),
+            if (friends.isEmpty) ...[
+              Text('Invite someone to join you', style: context.text.cardTitle),
+              const SizedBox(height: Spacing.stack),
+              PrimaryButton(
+                label: 'Connect with friends',
+                onPressed: () => context.push('/social/connect'),
+              ),
+              const SizedBox(height: Spacing.section),
             ],
-          ),
-          const SizedBox(height: Spacing.section),
-        ],
-        for (var i = usePodium ? 3 : 0; i < ranked.length; i++)
-          _row(ranked[i], ranks[i]),
-        if (myValue == null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: Spacing.stack),
-            child: Text(
-              'You · No recorded ${_metric == LeaderboardMetric.steps ? 'steps' : 'score'} for this period',
-              style: context.text.body.copyWith(
-                color: context.colors.textMedium,
+            _leaderboardCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(title, style: context.text.cardTitle),
+                  const SizedBox(height: Spacing.textPair),
+                  Text(
+                    explanation,
+                    style: context.text.caption.copyWith(
+                      color: context.colors.textMedium,
+                    ),
+                  ),
+                  const SizedBox(height: Spacing.block),
+                  if (usePodium)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        for (final index in [1, 0, 2])
+                          Expanded(
+                            child: _podium(
+                              ranked[index],
+                              ranks[index],
+                              index == 0,
+                            ),
+                          ),
+                      ],
+                    )
+                  else
+                    _rankingDetails(
+                      ranked,
+                      ranks,
+                      0,
+                      myValue == null,
+                      unranked,
+                    ),
+                ],
               ),
             ),
-          ),
-        if (unranked.isNotEmpty) ...[
-          const SizedBox(height: Spacing.section),
-          Text('AWAITING SHARED ACTIVITY', style: context.text.eyebrow),
-          const SizedBox(height: Spacing.stack),
-          ...unranked,
-        ],
-      ],
+            if (usePodium && hasRemaining) ...[
+              const SizedBox(height: Spacing.stack),
+              _leaderboardCard(
+                child: _rankingDetails(
+                  ranked,
+                  ranks,
+                  3,
+                  myValue == null,
+                  unranked,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
+
+  Widget _leaderboardCard({required Widget child}) => SurfaceCard(
+    margin: EdgeInsets.zero,
+    child: Material(
+      // Paint focus and tap feedback above the card's opaque background.
+      type: MaterialType.transparency,
+      textStyle: DefaultTextStyle.of(context).style,
+      child: child,
+    ),
+  );
+
+  Widget _rankingDetails(
+    List<_RankedFriend> ranked,
+    List<int> ranks,
+    int start,
+    bool selfUnranked,
+    List<Widget> unranked,
+  ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (var i = start; i < ranked.length; i++) ...[
+        if (i > start) const SizedBox(height: Spacing.inline),
+        _row(ranked[i], ranks[i]),
+      ],
+      if (selfUnranked)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: Spacing.stack),
+          child: Text(
+            'You · No recorded ${_metric == LeaderboardMetric.steps ? 'steps' : 'score'} for this period',
+            style: context.text.body.copyWith(color: context.colors.textMedium),
+          ),
+        ),
+      if (unranked.isNotEmpty) ...[
+        if (ranked.length > start || selfUnranked)
+          const SizedBox(height: Spacing.block),
+        Text('AWAITING SHARED ACTIVITY', style: context.text.eyebrow),
+        const SizedBox(height: Spacing.stack),
+        ...unranked,
+      ],
+    ],
+  );
 
   String _value(int value) => _metric == LeaderboardMetric.steps
       ? NumberFormat.decimalPattern().format(value)
@@ -642,54 +717,75 @@ class _LeaderboardTabState extends ConsumerState<_LeaderboardTab> {
     if (entry.friend != null) showFriendDetailsSheet(context, entry.friend!);
   }
 
-  Widget _row(_RankedFriend entry, int rank) => Padding(
-    padding: const EdgeInsets.only(bottom: Spacing.stack),
-    child: Material(
-      color: entry.friend == null
-          ? context.colors.primary.withValues(alpha: .1)
-          : Colors.transparent,
+  Widget _row(_RankedFriend entry, int rank) => Material(
+    color: entry.friend == null
+        ? context.colors.primary.withValues(alpha: .1)
+        : Colors.transparent,
+    borderRadius: BorderRadius.circular(Radii.card),
+    child: InkWell(
+      onTap: entry.friend == null ? null : () => _open(entry),
       borderRadius: BorderRadius.circular(Radii.card),
-      child: InkWell(
-        onTap: entry.friend == null ? null : () => _open(entry),
-        borderRadius: BorderRadius.circular(Radii.card),
-        child: Padding(
-          padding: const EdgeInsets.all(Spacing.stack),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 32,
-                child: Text(
-                  '#$rank',
-                  style: context.text.bodyStrong.copyWith(
-                    color: context.colors.accentText,
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.stack),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final stackDetails =
+                constraints.maxWidth < 320 &&
+                MediaQuery.textScalerOf(context).scale(14) > 18;
+            final rankLabel = Text(
+              '#$rank',
+              style: context.text.bodyStrong.copyWith(
+                color: context.colors.accentText,
+              ),
+            );
+            final avatar = FriendAvatar(
+              name: entry.profile.name,
+              avatarUrl: entry.profile.avatarUrl,
+              size: 36,
+            );
+            final details = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_name(entry), style: context.text.bodyStrong),
+                Text(
+                  '${_value(entry.value)} ${_metric == LeaderboardMetric.steps ? 'steps' : '/ 100'}',
+                  style: context.text.body.copyWith(
+                    color: context.colors.textMedium,
                   ),
                 ),
-              ),
-              FriendAvatar(
-                name: entry.profile.name,
-                avatarUrl: entry.profile.avatarUrl,
-                size: 36,
-              ),
-              const SizedBox(width: Spacing.stack),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_name(entry), style: context.text.bodyStrong),
-                    Text(
-                      '${_value(entry.value)} ${_metric == LeaderboardMetric.steps ? 'steps' : '/ 100'}',
-                      style: context.text.body.copyWith(
-                        color: context.colors.textMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (entry.friend != null)
-                const Icon(Icons.chevron_right_rounded, size: 20),
-            ],
-          ),
+              ],
+            );
+            if (stackDetails) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      rankLabel,
+                      const SizedBox(width: Spacing.stack),
+                      avatar,
+                      const Spacer(),
+                      if (entry.friend != null)
+                        const Icon(Icons.chevron_right_rounded, size: 20),
+                    ],
+                  ),
+                  const SizedBox(height: Spacing.stack),
+                  details,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 32, child: rankLabel),
+                avatar,
+                const SizedBox(width: Spacing.stack),
+                Expanded(child: details),
+                if (entry.friend != null)
+                  const Icon(Icons.chevron_right_rounded, size: 20),
+              ],
+            );
+          },
         ),
       ),
     ),
@@ -703,7 +799,8 @@ class _LeaderboardTabState extends ConsumerState<_LeaderboardTab> {
         : context.colors.bronze;
     return Semantics(
       button: entry.friend != null,
-      label: 'Rank $rank, ${_name(entry)}, ${_value(entry.value)}',
+      label:
+          'Rank $rank, ${_name(entry)}, ${_value(entry.value)} ${_metric == LeaderboardMetric.steps ? 'steps' : 'out of 100'}',
       child: InkWell(
         onTap: entry.friend == null ? null : () => _open(entry),
         borderRadius: BorderRadius.circular(Radii.card),
@@ -712,45 +809,47 @@ class _LeaderboardTabState extends ConsumerState<_LeaderboardTab> {
             horizontal: 4,
             vertical: Spacing.stack,
           ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 2),
+          child: ExcludeSemantics(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color, width: 2),
+                  ),
+                  child: FriendAvatar(
+                    name: entry.profile.name,
+                    avatarUrl: entry.profile.avatarUrl,
+                    size: first ? 64 : 48,
+                  ),
                 ),
-                child: FriendAvatar(
-                  name: entry.profile.name,
-                  avatarUrl: entry.profile.avatarUrl,
-                  size: first ? 64 : 48,
+                const SizedBox(height: Spacing.stack),
+                Text(
+                  _name(entry),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.caption.copyWith(
+                    color: context.colors.textDark,
+                  ),
                 ),
-              ),
-              const SizedBox(height: Spacing.stack),
-              Text(
-                _name(entry),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: context.text.caption.copyWith(
-                  color: context.colors.textDark,
+                Text(
+                  '#$rank',
+                  style: context.text.caption.copyWith(
+                    color: context.colors.textMedium,
+                  ),
                 ),
-              ),
-              Text(
-                '#$rank',
-                style: context.text.caption.copyWith(
-                  color: context.colors.textMedium,
+                Text(
+                  _metric == LeaderboardMetric.steps
+                      ? NumberFormat.compact().format(entry.value)
+                      : '${entry.value}',
+                  style: context.text.cardTitle.copyWith(
+                    color: context.colors.accentText,
+                  ),
                 ),
-              ),
-              Text(
-                _metric == LeaderboardMetric.steps
-                    ? NumberFormat.compact().format(entry.value)
-                    : '${entry.value}',
-                style: context.text.cardTitle.copyWith(
-                  color: context.colors.accentText,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

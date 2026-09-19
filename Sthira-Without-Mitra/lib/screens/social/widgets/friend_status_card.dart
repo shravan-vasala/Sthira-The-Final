@@ -8,6 +8,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/surface_card.dart';
 import 'friend_avatar.dart';
 import 'friend_details_sheet.dart';
 
@@ -21,12 +22,19 @@ class FriendStatusCard extends ConsumerWidget {
     if (ref.watch(accountTransitionProvider)) return const SizedBox.shrink();
     final now = ref.watch(clockProvider);
     final profileAsync = ref.watch(friendProfileStreamProvider(friend.uid));
-    return profileAsync.when(
-      skipLoadingOnRefresh: false,
-      skipLoadingOnReload: false,
-      data: (profile) => _content(context, ref, now, profile: profile),
-      loading: () => _content(context, ref, now, loading: true),
-      error: (error, _) => _content(context, ref, now, error: error),
+    return SurfaceCard(
+      margin: EdgeInsets.zero,
+      child: Material(
+        type: MaterialType.transparency,
+        textStyle: DefaultTextStyle.of(context).style,
+        child: profileAsync.when(
+          skipLoadingOnRefresh: false,
+          skipLoadingOnReload: false,
+          data: (profile) => _content(context, ref, now, profile: profile),
+          loading: () => _content(context, ref, now, loading: true),
+          error: (error, _) => _content(context, ref, now, error: error),
+        ),
+      ),
     );
   }
 
