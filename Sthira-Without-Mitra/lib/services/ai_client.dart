@@ -801,7 +801,9 @@ class AiClient {
       'contents': [
         {
           'role': 'user',
-          'parts': [
+          // Photo encoding appends nested inlineData alongside string text.
+          // Do not infer a text-only List<Map<String, String>> here.
+          'parts': <Map<String, dynamic>>[
             {'text': prompt},
           ],
         },

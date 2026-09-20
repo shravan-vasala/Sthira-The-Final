@@ -1,0 +1,21 @@
+{
+  "name": "Sthira combined AI scan and build fix",
+  "files": [
+    {
+      "path": "lib/services/ai_client.dart",
+      "sha256": "2e7860d13f211fcb1d322075c925146a2a9bc08b1711d418b18063a9e1f5c0e5"
+    },
+    {
+      "path": "test/services/ai_transport_test.dart",
+      "sha256": "f6b198179b1a7a4b2c8e38d319b9950dd53c374df8c7fb6babae561e69cdfcf3"
+    },
+    {
+      "path": "lib/screens/home/widgets/day_feeling_card.dart",
+      "sha256": "e8dcdfec63a6376ea860c0d356a16c13e9dff9ff727435edd551c9d68b75a394"
+    },
+    {
+      "path": "build.yaml",
+      "sha256": "0c5b4912776511a40bd267b72483582da23774eebbb4c62a9d621a0df70a79ef"
+    }
+  ]
+}

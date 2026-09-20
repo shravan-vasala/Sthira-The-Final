@@ -1,0 +1,81 @@
+STHIRA - COMBINED AI PHOTO SCAN AND BUILD FIX
+==========================================
+
+This package includes the AI scanner fix that was NOT included in the
+earlier Sthira-Build-Runner-Fix.zip.
+
+WHAT IS FIXED
+The photo request originally inferred a text-only List<Map<String,String>>.
+Attaching the nested inlineData image object then threw a Dart TypeError
+before HTTP dispatch. The list now accepts Map<String,dynamic>.
+Real HTTP tests reproduce the old failure and pass with this fix.
+
+The repeated 1-13 ms "unknown" screenshots are consistent with that old
+request code still running, but the installed phone build cannot be
+verified from screenshots alone.
+
+The package also includes the Daily Check-in syntax compatibility fix
+and the corrected Isar generator configuration.
+
+FILES TO MERGE / OVERWRITE
+- lib/services/ai_client.dart
+- test/services/ai_transport_test.dart
+- lib/screens/home/widgets/day_feeling_card.dart
+- build.yaml
+
+APPLY TO THE CORRECT PROJECT
+1. Close the running Flutter debug session.
+2. Extract this ZIP.
+3. Merge its contents into the project root you are actually building:
+   C:\Users\ShravanKumarVasala\Desktop\Sthira-TheFinal\Sthira-Without-Mitra
+4. Overwrite the four files above. Merge the lib and test folders;
+   do not replace/delete those entire folders.
+5. Keep your pubspec.yaml, pubspec.lock, assets and other project files.
+
+VERIFY BEFORE BUILDING
+Optional read-only exact-file verification from your project PowerShell:
+  & .\Verify-Sthira-Scan-Fix.ps1
+
+This reports [OK] for all four files when they match this package. It does
+not change files, install anything, read your API key or make network calls.
+A DIFFERENT result can also mean your editor changed line endings or you
+have local modifications; inspect that file before replacing it again.
+
+If your PowerShell policy does not allow local scripts, use these built-in
+checks instead (both must print matching lines):
+  Select-String .\lib\services\ai_client.dart -SimpleMatch "'parts': <Map<String, dynamic>>["
+  Select-String .\lib\screens\home\widgets\day_feeling_card.dart -SimpleMatch 'if (feeling != null) feeling'
+
+Also confirm build.yaml contains isar_generator, not riverpod_generator.
+Expected SHA256 hashes are in Sthira-Scan-Fix.manifest.json.
+
+REBUILD AND INSTALL
+Run from the actual project root after copying the files:
+  & "C:\flutter\bin\flutter.bat" clean
+  & "C:\flutter\bin\flutter.bat" pub get
+  & "C:\flutter\bin\dart.bat" run build_runner build --delete-conflicting-outputs
+  & "C:\flutter\bin\flutter.bat" run --release
+
+Connect and select your Android phone for the final command.
+It rebuilds and runs the updated app; hot reload alone is not this check.
+
+If you normally install an APK manually, use this instead of run --release:
+  & "C:\flutter\bin\flutter.bat" build apk --release
+Then install/update build\app\outputs\flutter-apk\app-release.apk on the phone.
+Creating an APK on the computer does not update the installed phone app.
+
+AFTER INSTALLATION
+Take a new meal photo and analyse it. Existing API setup is retained by a
+normal app update. Do not share API keys when reporting any later error.
+If it still fails after verifying/rebuilding/installing, share the new
+Recent AI Activity entry. That could represent a different failure.
+
+VALIDATION
+- 107 focused AI, scanner and Daily Check-in tests passed on this source.
+- Real local HTTP tests cover prepared JPEGs and PNG preprocessing, with
+  two images and preserved text/ordering.
+- Isar generation previously succeeded with the included build fixes.
+- No new dependency or model changes were made.
+- An Isar analyzer-version advisory can remain without failing generation.
+  Do not force analyzer 14.4 into the current Isar 3 dependency constraints.
+- Live Gemini acceptance on your device/account is not tested by this ZIP.

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:trufit_bodamma/services/ai_client.dart';
 import 'package:trufit_bodamma/services/ai_logger.dart';
 
@@ -354,6 +355,61 @@ void main() {
       );
     },
   );
+
+  for (final alreadyProcessed in [true, false]) {
+    test(
+      'real photo request encodes text and two images (prepared: $alreadyProcessed)',
+      () async {
+        final images = [
+          for (final width in [12, 16])
+            alreadyProcessed
+                ? img.encodeJpg(img.Image(width: width, height: 12))
+                : img.encodePng(img.Image(width: width, height: 12)),
+        ];
+        var calls = 0;
+        handler = (req) async {
+          calls++;
+          final payload =
+              jsonDecode(await utf8.decoder.bind(req).join())
+                  as Map<String, dynamic>;
+          final content =
+              (payload['contents'] as List).single as Map<String, dynamic>;
+          final parts = (content['parts'] as List).cast<Map<String, dynamic>>();
+          expect(parts, hasLength(3));
+          expect(parts.first, {'text': 'synthetic meal photo'});
+          for (var i = 0; i < images.length; i++) {
+            final image = parts[i + 1]['inlineData'] as Map<String, dynamic>;
+            expect(image['mimeType'], 'image/jpeg');
+            final bytes = base64Decode(image['data'] as String);
+            expect(img.decodeJpg(bytes), isNotNull);
+            if (alreadyProcessed) expect(bytes, orderedEquals(images[i]));
+          }
+          req.response.write(
+            _response([
+              {'text': '{"ok":true}'},
+            ]),
+          );
+          await req.response.close();
+        };
+        await withTransport(() async {
+          final result = await client.generateJson(
+            prompt: 'synthetic meal photo',
+            systemInstruction: 'JSON only',
+            apiKey: 'test-key',
+            imageBytesList: images,
+            mimeType: alreadyProcessed ? 'image/jpeg' : 'image/png',
+            isAlreadyProcessed: alreadyProcessed,
+          );
+          expect(result, {'ok': true});
+        });
+        expect(calls, 1);
+        expect(
+          transport.urls.single.path,
+          '/v1beta/models/${AiClient.visionModelsToTry.first}:generateContent',
+        );
+      },
+    );
+  }
 
   test('valid payload, multipart answers and reusable connections', () async {
     final ports = <int>[];
