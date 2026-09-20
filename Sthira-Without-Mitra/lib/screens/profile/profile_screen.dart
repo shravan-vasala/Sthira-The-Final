@@ -12,6 +12,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/app_bottom_sheet.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/target_estimate_sheet.dart';
+import '../../utils/target_calculator.dart';
 import 'widgets/trophy_room_card.dart';
 import 'widgets/journey_stats_strip.dart';
 import '../../providers/app_providers.dart';
@@ -1021,6 +1023,8 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   String? _localPhotoPath;
   bool _clearPhoto = false;
   bool _isSaving = false;
+  bool _isEstimating = false;
+  TargetEstimateInputs? _targetInputs;
   late final int _accountGeneration;
   final _fieldErrors = <String, String>{};
 
@@ -1065,6 +1069,61 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     carbsController.dispose();
     fatController.dispose();
     super.dispose();
+  }
+
+  bool get _canEstimate =>
+      mounted &&
+      ref.read(accountGenerationProvider) == _accountGeneration &&
+      !ref.read(accountTransitionProvider) &&
+      !ref.read(accountHydratingProvider);
+
+  Future<void> _suggestTargets() async {
+    if (_isSaving || _isEstimating || !_canEstimate) return;
+    final profile = ref.read(profileProvider);
+    final draft = _targetInputs;
+    final height = double.tryParse(heightController.text.trim());
+    setState(() => _isEstimating = true);
+    try {
+      final estimate = await showAppBottomSheet<TargetEstimate>(
+        context: context,
+        builder: (_) => TargetEstimateSheet(
+          initialInputs: TargetEstimateInputs(
+            heightCm:
+                height ?? profile.height ?? TargetCalculator.defaultHeightCm,
+            weightKg:
+                draft?.weightKg ??
+                profile.currentWeight ??
+                TargetCalculator.defaultWeightKg,
+            age: draft?.age ?? profile.age ?? TargetCalculator.defaultAge,
+            gender:
+                draft?.gender ??
+                profile.gender ??
+                TargetCalculator.defaultGender,
+            activityLevel:
+                draft?.activityLevel ??
+                TargetCalculator.normalizeActivityLevel(profile.activityLevel),
+            goal:
+                draft?.goal ??
+                TargetCalculator.normalizeGoal(profile.primaryGoal),
+          ),
+          useKg: profile.useKg,
+        ),
+      );
+      if (estimate == null || !_canEstimate) return;
+      setState(() {
+        _targetInputs = estimate.inputs;
+        heightController.text = estimate.inputs.heightCm.toString();
+        caloriesController.text = estimate.targets.calories.toString();
+        proteinController.text = estimate.targets.proteinG.toString();
+        carbsController.text = estimate.targets.carbsG.toString();
+        fatController.text = estimate.targets.fatG.toString();
+        for (final field in ['height', 'calories', 'protein', 'carbs', 'fat']) {
+          _fieldErrors.remove(field);
+        }
+      });
+    } finally {
+      if (mounted) setState(() => _isEstimating = false);
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -1217,6 +1276,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       );
     }
     final profile = ref.watch(profileProvider);
+    final accountBusy =
+        ref.watch(accountTransitionProvider) ||
+        ref.watch(accountHydratingProvider);
 
     return AppSheet(
       title: 'Edit Profile',
@@ -1245,39 +1307,10 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                         width: 1.5,
                       ),
                     ),
-                    child: ClipOval(
-                      child: _localPhotoPath != null && !_clearPhoto
-                          ? (_localPhotoPath!.startsWith('assets/')
-                                ? Image.asset(
-                                    _localPhotoPath!,
-                                    width: 72,
-                                    height: 72,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.file(
-                                    File(
-                                      ref
-                                          .read(mediaRepoProvider)
-                                          .getAbsolutePath(_localPhotoPath!),
-                                    ),
-                                    width: 72,
-                                    height: 72,
-                                    fit: BoxFit.cover,
-                                  ))
-                          : Center(
-                              child: nameController.text.isNotEmpty
-                                  ? Text(
-                                      nameController.text[0].toUpperCase(),
-                                      style: context.text.display.copyWith(
-                                        color: context.colors.primary,
-                                      ),
-                                    )
-                                  : Icon(
-                                      Icons.person_rounded,
-                                      size: 32,
-                                      color: context.colors.primary,
-                                    ),
-                            ),
+                    child: ProfileAvatar(
+                      name: nameController.text,
+                      photoPath: _clearPhoto ? null : _localPhotoPath,
+                      size: 72,
                     ),
                   ),
                   Positioned(
@@ -1330,6 +1363,17 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: _isSaving || _isEstimating || accountBusy
+                ? null
+                : _suggestTargets,
+            icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+            label: const Text('Suggest for me'),
+            style: TextButton.styleFrom(
+              foregroundColor: context.colors.primary,
+            ),
+          ),
+          const SizedBox(height: Spacing.inline),
           _ProfileTextField(
             label: 'Target Daily Calories',
             controller: caloriesController,
@@ -1384,7 +1428,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
           PrimaryButton(
             label: 'Save',
             isLoading: _isSaving,
-            onPressed: _isSaving
+            onPressed: _isSaving || _isEstimating
                 ? null
                 : () async {
                     setState(() => _isSaving = true);
@@ -1458,7 +1502,8 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                       if (errors.isNotEmpty) return;
                       if (ref.read(accountGenerationProvider) !=
                               _accountGeneration ||
-                          ref.read(accountTransitionProvider)) {
+                          ref.read(accountTransitionProvider) ||
+                          ref.read(accountHydratingProvider)) {
                         throw StateError(
                           'Account changed. Reopen Edit profile.',
                         );
@@ -1476,6 +1521,11 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                         clearHeight: heightText.isEmpty,
                         targetWeight: finalTargetKg,
                         clearTargetWeight: targetText.isEmpty,
+                        currentWeight: _targetInputs?.weightKg,
+                        age: _targetInputs?.age,
+                        gender: _targetInputs?.gender,
+                        activityLevel: _targetInputs?.activityLevel,
+                        primaryGoal: _targetInputs?.goal,
                         targetCalories: parsedCal!,
                         targetProteinG: parsedPro!,
                         targetCarbsG: parsedCar!,

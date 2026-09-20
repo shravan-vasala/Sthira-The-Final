@@ -31,6 +31,7 @@ import '../../../widgets/surface_card.dart';
 import '../../../models/food_nutrition.dart';
 import '../../../widgets/offline_banner.dart';
 import '../../../widgets/primary_button.dart';
+import '../../../widgets/setup_sheets.dart';
 import '../../../services/ai_profiler.dart';
 import '../../../services/image_preprocessor.dart';
 
@@ -74,6 +75,7 @@ class _PhotoCalorieScannerSheetState
   String? _confidence;
   String? _errorMessage;
   String? _techErrorMsg;
+  AiException? _analysisError;
   bool _isOffline = false;
   final _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
@@ -452,7 +454,19 @@ class _PhotoCalorieScannerSheetState
     }
   }
 
+  bool _canUseCurrentLog() {
+    if (_ownsCurrentLog) return true;
+    if (mounted) {
+      _showError(
+        'Date or account changed. Reopen this meal to log it.',
+        _analysisSessionToken,
+      );
+    }
+    return false;
+  }
+
   Future<void> _analyzeImage({bool skipCache = false}) async {
+    if (!_canUseCurrentLog()) return;
     if (_selectedImages.isEmpty || _isAnalyzing) return;
     FocusManager.instance.primaryFocus?.unfocus();
     profiler = AiProfileSession()
@@ -463,6 +477,7 @@ class _PhotoCalorieScannerSheetState
       _isAnalyzing = true;
       _errorMessage = null;
       _techErrorMsg = null;
+      _analysisError = null;
     });
     final currentToken = ++_analysisSessionToken;
     _cancellationToken?.cancel();
@@ -500,6 +515,7 @@ class _PhotoCalorieScannerSheetState
       if (!mounted || currentToken != _analysisSessionToken) return;
       profiler?.endPhase('fileReadMs');
 
+      if (!_canUseCurrentLog()) return;
       final String mimeType = 'image/jpeg';
 
       final result = await service.analyzeFoodImage(
@@ -529,6 +545,7 @@ class _PhotoCalorieScannerSheetState
   }
 
   Future<void> _analyzeDescription() async {
+    if (!_canUseCurrentLog()) return;
     if (_isAnalyzing) return;
     final text = _descriptionCtrl.text.trim();
     if (text.isEmpty) {
@@ -550,6 +567,7 @@ class _PhotoCalorieScannerSheetState
       _analysisComplete = false;
       _errorMessage = null;
       _techErrorMsg = null;
+      _analysisError = null;
       _items = [];
       _selectedImages = [];
       _preparedImages.clear();
@@ -591,33 +609,23 @@ class _PhotoCalorieScannerSheetState
     if (token != _analysisSessionToken) return;
     _statusTimer?.cancel();
     _finishProfile(TerminalOutcome.error);
-    final msg = e
-        .toString()
-        .replaceAll('Exception: ', '')
-        .replaceAll('AiException: ', '');
-    String humanMsg = msg;
-    AiErrorCause? cause;
-
-    if (e is AiException) {
-      cause = e.cause;
+    final failure = e is AiException
+        ? e
+        : AiException(
+            'Could not complete the analysis.',
+            cause: classifyAiError(e),
+          );
+    _countdownTimer?.cancel();
+    _cooldownSeconds.value = 0;
+    if (failure.canRetry && failure.retryAfter != null) {
+      _startCooldown((failure.retryAfter!.inMilliseconds / 1000).ceil());
     }
-
-    if (cause == AiErrorCause.rateLimited) {
-      _startCooldown(90);
-    } else if (cause == AiErrorCause.overloaded) {
-      _startCooldown(30);
-    }
-
-    if (msg.contains('OFFLINE_FALLBACK') ||
-        msg.contains('Service temporarily unavailable')) {
-      humanMsg = 'OFFLINE_FALLBACK';
-    }
-
     Haptics.error();
     setState(() {
       _isAnalyzing = false;
-      _errorMessage = humanMsg;
-      _techErrorMsg = msg;
+      _analysisError = failure;
+      _errorMessage = failure.userMessage;
+      _techErrorMsg = failure.diagnosticSummary;
     });
   }
 
@@ -629,6 +637,8 @@ class _PhotoCalorieScannerSheetState
     setState(() {
       _isAnalyzing = false;
       _errorMessage = message;
+      _analysisError = null;
+      _techErrorMsg = null;
     });
   }
 
@@ -1549,77 +1559,111 @@ class _PhotoCalorieScannerSheetState
                       data: Theme.of(
                         context,
                       ).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        title: Text(
-                          'Details',
-                          style: context.text.caption.copyWith(
-                            color: context.colors.red,
-                          ),
-                        ),
-                        tilePadding: EdgeInsets.zero,
-                        childrenPadding: const EdgeInsets.only(bottom: 8),
-                        children: [
-                          Text(
-                            _techErrorMsg!,
-                            style: context.text.micro.copyWith(
-                              color: context.colors.textMedium,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: ExpansionTile(
+                          title: Text(
+                            'Details',
+                            style: context.text.caption.copyWith(
+                              color: context.colors.red,
                             ),
                           ),
-                        ],
+                          tilePadding: EdgeInsets.zero,
+                          childrenPadding: const EdgeInsets.only(bottom: 8),
+                          children: [
+                            Text(
+                              _techErrorMsg!,
+                              style: context.text.micro.copyWith(
+                                color: context.colors.textMedium,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  ValueListenableBuilder<int>(
-                    valueListenable: _cooldownSeconds,
-                    builder: (context, cooldown, child) {
-                      return ElevatedButton.icon(
-                        onPressed: cooldown > 0
-                            ? null
-                            : () {
-                                setState(() => _errorMessage = null);
-                                if (_describeMode) {
-                                  _analyzeDescription();
-                                } else if (_selectedImages.isNotEmpty) {
-                                  _analyzeImage(skipCache: true);
-                                } else {
-                                  _pickImage(ImageSource.gallery);
-                                }
-                              },
-                        icon: cooldown > 0
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.refresh_rounded, size: 18),
-                        label: Text(
-                          cooldown > 0 ? 'Wait $cooldown s...' : 'Try again',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: context.colors.red,
-                          foregroundColor: context.colors.onPrimary,
-                        ),
-                      );
-                    },
-                  ),
+                  if (_analysisError?.cause == AiErrorCause.invalidKey) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () async {
+                        if (!_canUseCurrentLog()) return;
+                        final saved = await showAppBottomSheet<bool>(
+                          context: context,
+                          builder: (_) => const AiSetupSheet(),
+                        );
+                        if (!mounted || saved != true || !_canUseCurrentLog()) {
+                          return;
+                        }
+                        if (_describeMode) {
+                          await _analyzeDescription();
+                        } else if (_selectedImages.isNotEmpty) {
+                          await _analyzeImage(skipCache: true);
+                        }
+                      },
+                      child: const Text('AI Settings'),
+                    ),
+                  ],
+                  if (_analysisError?.canRetry != false) ...[
+                    const SizedBox(height: 12),
+                    ValueListenableBuilder<int>(
+                      valueListenable: _cooldownSeconds,
+                      builder: (context, cooldown, child) {
+                        return ElevatedButton.icon(
+                          onPressed: cooldown > 0
+                              ? null
+                              : () {
+                                  setState(() => _errorMessage = null);
+                                  if (_describeMode) {
+                                    _analyzeDescription();
+                                  } else if (_selectedImages.isNotEmpty) {
+                                    _analyzeImage(skipCache: true);
+                                  } else {
+                                    _pickImage(ImageSource.gallery);
+                                  }
+                                },
+                          icon: cooldown > 0
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh_rounded, size: 18),
+                          label: Text(
+                            cooldown > 0
+                                ? 'Try again in $cooldown s'
+                                : 'Try again',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: context.colors.red,
+                            foregroundColor: context.colors.onPrimary,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(height: 12),
-            _actionPair(
-              context,
-              OutlinedButton(
-                onPressed: _switchToDescribe,
-                child: const Text('Describe instead'),
-              ),
+            if (!_describeMode && _analysisError?.cause == AiErrorCause.parse)
+              _actionPair(
+                context,
+                OutlinedButton(
+                  onPressed: _switchToDescribe,
+                  child: const Text('Describe instead'),
+                ),
+                ElevatedButton(
+                  onPressed: _enterManualItems,
+                  child: const Text('Enter yourself'),
+                ),
+              )
+            else
               ElevatedButton(
                 onPressed: _enterManualItems,
                 child: const Text('Enter yourself'),
               ),
-            ),
           ] else if (_selectedImages.isNotEmpty || _isAnalyzing) ...[
             if (_selectedImages.isNotEmpty)
               Column(

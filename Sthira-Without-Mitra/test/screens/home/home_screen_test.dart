@@ -384,11 +384,14 @@ void main() {
           'Meals',
           'Daily progress',
           'Recent activity',
-          'Optional',
+          'Daily check-in',
         ]) {
           await _visible(tester, find.text(section).first);
           expect(tester.takeException(), isNull);
         }
+        expect(find.text('How did today feel?'), findsOneWidget);
+        expect(find.text('Struggled'), findsNothing);
+        expect(find.byType(TextField), findsNothing);
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );

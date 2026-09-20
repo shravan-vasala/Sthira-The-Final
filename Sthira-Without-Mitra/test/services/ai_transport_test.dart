@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trufit_bodamma/services/ai_client.dart';
+import 'package:trufit_bodamma/services/ai_logger.dart';
 
 class _RedirectClient implements HttpClient {
   final HttpClient delegate;
@@ -84,6 +85,274 @@ void main() {
     cancellationToken: token,
     overallDeadline: deadline,
     onProgress: onProgress,
+  );
+
+  for (final code in [400, 403, 404]) {
+    test(
+      'HTTP $code retains safe reason and avoids futile same-model retries',
+      () async {
+        int calls = 0;
+        handler = (req) async {
+          calls++;
+          await req.drain<void>();
+          req.response.statusCode = code;
+          req.response.write(
+            jsonEncode({
+              'error': {
+                'status': code == 400
+                    ? 'INVALID_ARGUMENT'
+                    : code == 403
+                    ? 'PERMISSION_DENIED'
+                    : 'NOT_FOUND',
+                'message': 'PRIVATE_MEAL_AND_KEY_SHOULD_NEVER_APPEAR',
+              },
+            }),
+          );
+          await req.response.close();
+        };
+        await withTransport(() async {
+          try {
+            await request();
+            fail('Expected provider rejection');
+          } on AiException catch (error) {
+            expect(error.statusCode, code);
+            expect(error.canRetry, isFalse);
+            expect(error.userMessage, isNot(contains('in a minute')));
+            expect(error.userMessage, isNot(contains('PRIVATE')));
+            expect(error.diagnosticSummary, contains('HTTP $code'));
+            expect(error.diagnosticSummary, isNot(contains('PRIVATE')));
+            expect(AiLogger.logs.first.outcome, contains('HTTP $code'));
+            expect(AiLogger.logs.first.outcome, isNot(contains('PRIVATE')));
+          }
+        });
+        expect(calls, code == 404 ? AiClient.textModelsToTry.length : 1);
+      },
+    );
+  }
+
+  for (final daily in [true, false]) {
+    test('daily or zero quota stops without retry ($daily)', () async {
+      int calls = 0;
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        req.response.statusCode = 429;
+        req.response.write(
+          jsonEncode({
+            'error': {
+              'status': 'RESOURCE_EXHAUSTED',
+              'details': [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
+                  'violations': [
+                    if (daily)
+                      {'quotaId': 'GenerateRequestsPerDayPerProjectPerModel'}
+                    else
+                      {
+                        'quotaId': 'GenerateRequestsPerMinute',
+                        'quotaValue': '0',
+                      },
+                  ],
+                },
+                {
+                  '@type': 'type.googleapis.com/google.rpc.RetryInfo',
+                  'retryDelay': '1s',
+                },
+              ],
+            },
+          }),
+        );
+        await req.response.close();
+      };
+      await withTransport(
+        () => expectLater(
+          request(),
+          throwsA(
+            isA<AiException>()
+                .having((e) => e.quotaExhausted, 'quota exhausted', isTrue)
+                .having((e) => e.canRetry, 'retry', isFalse)
+                .having(
+                  (e) => e.userMessage,
+                  'action',
+                  contains('Google AI Studio'),
+                ),
+          ),
+        ),
+      );
+      expect(calls, 1);
+    });
+  }
+
+  test(
+    'long provider retry timing is preserved without another model request',
+    () async {
+      int calls = 0;
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        req.response.statusCode = 429;
+        req.response.headers.set(HttpHeaders.retryAfterHeader, '120');
+        req.response.write(
+          jsonEncode({
+            'error': {
+              'status': 'RESOURCE_EXHAUSTED',
+              'details': [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.RetryInfo',
+                  'retryDelay': '60.5s',
+                },
+              ],
+            },
+          }),
+        );
+        await req.response.close();
+      };
+      await withTransport(
+        () => expectLater(
+          request(),
+          throwsA(
+            isA<AiException>()
+                .having(
+                  (e) => e.retryAfter,
+                  'provider retry timing',
+                  const Duration(seconds: 120),
+                )
+                .having((e) => e.canRetry, 'later retry', isTrue),
+          ),
+        ),
+      );
+      expect(calls, 1);
+    },
+  );
+
+  test('HTTP-date Retry-After is preserved', () async {
+    handler = (req) async {
+      await req.drain<void>();
+      req.response.statusCode = 503;
+      req.response.headers.set(
+        HttpHeaders.retryAfterHeader,
+        HttpDate.format(
+          DateTime.now().toUtc().add(const Duration(seconds: 90)),
+        ),
+      );
+      req.response.write('busy');
+      await req.response.close();
+    };
+    await withTransport(
+      () => expectLater(
+        request(),
+        throwsA(
+          isA<AiException>().having(
+            (e) => e.retryAfter!.inSeconds,
+            'delay',
+            inInclusiveRange(88, 90),
+          ),
+        ),
+      ),
+    );
+    expect(transport.urls, hasLength(1));
+  });
+
+  test('RetryInfo delays one retry of the same model before success', () async {
+    int calls = 0;
+    final requestTimes = <DateTime>[];
+    handler = (req) async {
+      calls++;
+      requestTimes.add(DateTime.now());
+      await req.drain<void>();
+      if (calls == 1) {
+        req.response.statusCode = 429;
+        req.response.write(
+          jsonEncode({
+            'error': {
+              'status': 'RESOURCE_EXHAUSTED',
+              'details': [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.RetryInfo',
+                  'retryDelay': '0.05s',
+                },
+              ],
+            },
+          }),
+        );
+      } else {
+        req.response.write(
+          _response([
+            {'text': '{"ok":true}'},
+          ]),
+        );
+      }
+      await req.response.close();
+    };
+    await withTransport(() async => expect(await request(), {'ok': true}));
+    expect(calls, 2);
+    expect(
+      requestTimes.last.difference(requestTimes.first).inMilliseconds,
+      greaterThanOrEqualTo(45),
+    );
+    expect(transport.urls.first.path, transport.urls.last.path);
+  });
+
+  test(
+    'busy primary without cooldown retains configured model fallback',
+    () async {
+      int calls = 0;
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        if (calls <= 2) {
+          req.response.statusCode = 503;
+          req.response.write('busy');
+        } else {
+          req.response.write(
+            _response([
+              {'text': '{"ok":true}'},
+            ]),
+          );
+        }
+        await req.response.close();
+      };
+      await withTransport(() async => expect(await request(), {'ok': true}));
+      expect(calls, 3);
+      expect(transport.urls.last.path, contains(AiClient.textModelsToTry.last));
+    },
+  );
+
+  test(
+    'unrecognized provider reason never enters safe diagnostic fields',
+    () async {
+      handler = (req) async {
+        await req.drain<void>();
+        req.response.statusCode = 400;
+        req.response.write(
+          jsonEncode({
+            'error': {
+              'status': 'PRIVATE_KEY',
+              'details': [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.ErrorInfo',
+                  'reason': 'PRIVATE_MEAL',
+                  'metadata': {'key': 'PRIVATE_KEY'},
+                },
+              ],
+            },
+          }),
+        );
+        await req.response.close();
+      };
+      await withTransport(
+        () => expectLater(
+          request(),
+          throwsA(
+            isA<AiException>().having(
+              (e) => e.diagnosticSummary,
+              'safe details',
+              'HTTP 400',
+            ),
+          ),
+        ),
+      );
+    },
   );
 
   test('valid payload, multipart answers and reusable connections', () async {

@@ -96,9 +96,178 @@ enum AiErrorCause {
 class AiException implements Exception {
   final String message;
   final AiErrorCause? cause;
-  AiException(this.message, {this.cause});
+  final int? statusCode;
+  final String? providerCode;
+  final Duration? retryAfter;
+  final bool quotaExhausted;
+  AiException(
+    this.message, {
+    this.cause,
+    this.statusCode,
+    this.providerCode,
+    this.retryAfter,
+    this.quotaExhausted = false,
+  });
+
+  bool get requestRejected =>
+      statusCode != null &&
+      statusCode! >= 400 &&
+      statusCode! < 500 &&
+      ![408, 429].contains(statusCode);
+  bool get canRetry =>
+      !quotaExhausted &&
+      !requestRejected &&
+      cause != AiErrorCause.invalidKey &&
+      cause != AiErrorCause.notFound &&
+      cause != AiErrorCause.cancelled;
+
+  String get userMessage {
+    if (quotaExhausted) {
+      return 'Your AI usage allowance is exhausted. Check usage in Google AI Studio or enter the meal yourself.';
+    }
+    switch (cause) {
+      case AiErrorCause.invalidKey:
+        return 'AI access needs attention. Check your key and permissions in AI Settings.';
+      case AiErrorCause.notFound:
+        return 'The AI service is unavailable for this connection. You can enter the meal yourself.';
+      case AiErrorCause.offline:
+        return 'Could not reach AI. Check your connection or enter the meal yourself.';
+      case AiErrorCause.rateLimited:
+        return 'AI has reached its request limit. Please wait before trying again, or enter the meal yourself.';
+      case AiErrorCause.overloaded:
+        return 'AI is busy right now. Try again shortly, or enter the meal yourself.';
+      case AiErrorCause.timeout:
+        return 'AI took too long to respond. Try again or enter the meal yourself.';
+      case AiErrorCause.parse:
+        return 'AI could not return a usable result. Try again or enter the meal yourself.';
+      case AiErrorCause.cancelled:
+        return 'Analysis cancelled.';
+      default:
+        return requestRejected
+            ? 'AI could not accept this request. You can enter the meal yourself.'
+            : 'Could not complete the analysis. Try again or enter the meal yourself.';
+    }
+  }
+
+  String? get diagnosticSummary {
+    // Only fixed protocol codes: never response bodies, photos, keys or URLs.
+    final details = <String>[
+      if (statusCode != null) 'HTTP $statusCode',
+      if (_safeProviderCodes.contains(providerCode)) providerCode!,
+      if (quotaExhausted) 'USAGE_ALLOWANCE_EXHAUSTED',
+    ];
+    return details.isEmpty ? null : details.join(' / ');
+  }
+
   @override
   String toString() => message;
+}
+
+const _safeProviderCodes = {
+  'INVALID_ARGUMENT',
+  'FAILED_PRECONDITION',
+  'PERMISSION_DENIED',
+  'NOT_FOUND',
+  'RESOURCE_EXHAUSTED',
+  'UNAVAILABLE',
+  'INTERNAL',
+  'DEADLINE_EXCEEDED',
+  'UNAUTHENTICATED',
+  'API_KEY_INVALID',
+  'API_KEY_EXPIRED',
+  'API_KEY_SERVICE_BLOCKED',
+  'SERVICE_DISABLED',
+  'BILLING_DISABLED',
+  'ACCESS_TOKEN_SCOPE_INSUFFICIENT',
+  'CONSUMER_INVALID',
+  'API_KEY_HTTP_REFERRER_BLOCKED',
+  'API_KEY_IP_ADDRESS_BLOCKED',
+  'API_KEY_ANDROID_APP_BLOCKED',
+  'API_KEY_IOS_APP_BLOCKED',
+};
+
+AiException _httpFailure(int statusCode, String body, {String? retryHeader}) {
+  Map? providerError;
+  try {
+    final decoded = jsonDecode(body);
+    if (decoded is Map && decoded['error'] is Map) {
+      providerError = decoded['error'] as Map;
+    }
+  } catch (_) {
+    // A proxy may return HTML. The status still determines recovery.
+  }
+  String? providerCode;
+  final status = providerError?['status'];
+  if (status is String && _safeProviderCodes.contains(status)) {
+    providerCode = status;
+  }
+  Duration? retryAfter;
+  void retainDelay(Duration? delay) {
+    if (delay != null &&
+        !delay.isNegative &&
+        (retryAfter == null || delay > retryAfter!)) {
+      retryAfter = delay;
+    }
+  }
+
+  if (retryHeader != null) {
+    final seconds = int.tryParse(retryHeader.trim());
+    if (seconds != null && seconds >= 0 && seconds <= 31536000) {
+      retainDelay(Duration(seconds: seconds));
+    } else {
+      try {
+        retainDelay(
+          HttpDate.parse(retryHeader).difference(DateTime.now().toUtc()),
+        );
+      } catch (_) {}
+    }
+  }
+  bool quotaExhausted = false;
+  final details = providerError?['details'];
+  if (details is List) {
+    for (final detail in details.whereType<Map>()) {
+      if (detail['@type'] == 'type.googleapis.com/google.rpc.ErrorInfo') {
+        final reason = detail['reason'];
+        if (reason is String && _safeProviderCodes.contains(reason)) {
+          providerCode = reason;
+        }
+      } else if (detail['@type'] ==
+          'type.googleapis.com/google.rpc.RetryInfo') {
+        final delay = detail['retryDelay'];
+        if (delay is String &&
+            RegExp(r'^\d+(?:\.\d{1,9})?s$').hasMatch(delay)) {
+          final seconds = double.tryParse(delay.substring(0, delay.length - 1));
+          if (seconds != null && seconds.isFinite && seconds <= 31536000) {
+            retainDelay(Duration(milliseconds: (seconds * 1000).ceil()));
+          }
+        }
+      } else if (detail['@type'] ==
+          'type.googleapis.com/google.rpc.QuotaFailure') {
+        final violations = detail['violations'];
+        if (violations is List) {
+          for (final violation in violations.whereType<Map>()) {
+            final quotaId = violation['quotaId'];
+            final quotaValue = violation['quotaValue'];
+            if ((quotaId is String &&
+                    (quotaId.toLowerCase().contains('perday') ||
+                        quotaId.toLowerCase().contains('per_day'))) ||
+                quotaValue == 0 ||
+                quotaValue == '0') {
+              quotaExhausted = true;
+            }
+          }
+        }
+      }
+    }
+  }
+  return AiException(
+    'AI request failed.',
+    cause: classifyAiError(body, statusCode: statusCode),
+    statusCode: statusCode,
+    providerCode: providerCode,
+    retryAfter: retryAfter,
+    quotaExhausted: statusCode == 429 && quotaExhausted,
+  );
 }
 
 AiErrorCause classifyAiError(Object error, {int? statusCode}) {
@@ -167,6 +336,15 @@ class AiClientCircuitBreaker {
   DateTime? lastFailureTime;
   static const int maxFailures = 3;
   static const Duration resetTimeout = Duration(seconds: 90);
+
+  Duration get remainingCooldown {
+    final failedAt = lastFailureTime;
+    if (consecutiveFailures < maxFailures || failedAt == null) {
+      return Duration.zero;
+    }
+    final remaining = resetTimeout - DateTime.now().difference(failedAt);
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
 
   bool get isOpen {
     if (consecutiveFailures >= maxFailures) {
@@ -354,8 +532,9 @@ class AiClient {
 
     if (breaker.isOpen) {
       throw AiException(
-        'Our AI is taking a quick breather to handle traffic. Give it about a minute.',
-        cause: AiErrorCause.rateLimited,
+        'AI is temporarily busy.',
+        cause: AiErrorCause.overloaded,
+        retryAfter: breaker.remainingCooldown,
       );
     }
 
@@ -370,6 +549,7 @@ class AiClient {
     final perAttemptTimeout = Duration(seconds: isVision ? 20 : 15);
 
     AiErrorCause? lastCause;
+    AiException? lastFailure;
     int attempts = 0;
 
     for (int i = 0; i < modelsToUse.length; i++) {
@@ -473,64 +653,62 @@ class AiClient {
           return json;
         } catch (e) {
           sw.stop();
-          final errStr = e.toString();
-          final cause = (e is AiException && e.cause != null)
-              ? e.cause!
-              : classifyAiError(e);
+          final cause = classifyAiError(e);
+          final failure = e is AiException
+              ? e
+              : AiException('AI request failed.', cause: cause);
           lastCause = cause;
-
+          lastFailure = failure;
           AiLogger.log(
             purpose: 'AI error fallback',
             model: modelName,
             durationMs: sw.elapsedMilliseconds,
             preprocessMs: preprocessMs,
-            outcome: cause.toString(),
+            outcome: [
+              cause.toString(),
+              if (failure.diagnosticSummary != null) failure.diagnosticSummary!,
+            ].join(' / '),
           );
-
           if (cause == AiErrorCause.cancelled) rethrow;
-          if (cause == AiErrorCause.invalidKey) {
-            throw AiException(
-              'This API key is invalid, disabled, or restricted. Please check Google AI Studio and ensure no IP or app restrictions are applied.',
-              cause: cause,
-            );
-          } else if (cause == AiErrorCause.offline) {
-            throw AiException(
-              'You seem to be offline. Please check your internet connection.',
-              cause: cause,
-            );
-          } else if (cause == AiErrorCause.parse) {
-            throw AiException(
-              'AI returned an invalid format. Please try again.\nDetails: $errStr',
-              cause: cause,
-            );
-          } else if (cause == AiErrorCause.notFound) {
-            debugPrint('AI model unavailable: $modelName; trying fallback.');
-            break; // Next model
-          } else if (cause == AiErrorCause.rateLimited ||
-              cause == AiErrorCause.overloaded) {
-            if (attempt < maxRetries) {
-              final delay = attempt + 1; // 1 second delay
-              if (DateTime.now()
-                  .add(Duration(seconds: delay))
-                  .isAfter(computedDeadline)) {
-                break;
-              }
-              if (cancellationToken?.isCancelled ?? false) break;
-              onProgress?.call(AiScanStage.retrying);
-              await token.waitFor(
-                Future<void>.delayed(Duration(seconds: delay)),
-                timeout: remainingTime(),
-              );
-              if (cancellationToken?.isCancelled ?? false) break;
-              attempt++;
-              continue;
-            } else {
-              break; // Next model
-            }
-          } else if (cause == AiErrorCause.timeout) {
-            break; // Next model immediately
+          if (failure.quotaExhausted ||
+              cause == AiErrorCause.invalidKey ||
+              cause == AiErrorCause.offline ||
+              cause == AiErrorCause.parse) {
+            throw failure;
           }
-          break; // Unknown error -> next model
+          if (cause == AiErrorCause.notFound) {
+            break; // An unavailable model can use the configured fallback.
+          }
+          if (failure.requestRejected) throw failure;
+          if (cause == AiErrorCause.rateLimited ||
+              cause == AiErrorCause.overloaded) {
+            final delay = failure.retryAfter ?? const Duration(seconds: 1);
+            // Never route around a provider cooldown through another model.
+            if (delay >= remainingTime()) {
+              breaker.recordFailure();
+              throw failure;
+            }
+            if (attempt >= maxRetries) {
+              if (failure.retryAfter != null ||
+                  cause == AiErrorCause.rateLimited) {
+                breaker.recordFailure();
+                throw failure;
+              }
+              break; // Busy model without a cooldown: try the configured fallback.
+            }
+            onProgress?.call(AiScanStage.retrying);
+            await token.waitFor(
+              Future<void>.delayed(delay),
+              timeout: remainingTime(),
+            );
+            attempt++;
+            continue;
+          }
+          if (cause == AiErrorCause.timeout) {
+            break; // A fallback may recover within the remaining deadline.
+          }
+          // Unknown failures are not evidence of a transient service outage.
+          throw failure;
         }
       }
     }
@@ -554,10 +732,8 @@ class AiClient {
       breaker.recordFailure();
     }
 
-    throw AiException(
-      'Couldn\'t analyze right now. Try again in a minute.',
-      cause: lastCause,
-    );
+    throw lastFailure ??
+        AiException('Could not complete the analysis.', cause: lastCause);
   }
 
   static String _hashImages(List<Uint8List> images) =>
@@ -675,9 +851,10 @@ class AiClient {
       final responseBody = await bodyResult.future;
       if (response.statusCode != HttpStatus.ok) {
         // Preserve status even when a proxy returns an HTML/non-JSON error.
-        throw AiException(
-          'AI request failed (HTTP ' + response.statusCode.toString() + ').',
-          cause: classifyAiError(responseBody, statusCode: response.statusCode),
+        throw _httpFailure(
+          response.statusCode,
+          responseBody,
+          retryHeader: response.headers.value(HttpHeaders.retryAfterHeader),
         );
       }
       profiler?.startPhase('bodyParseMs');

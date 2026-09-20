@@ -12,6 +12,7 @@ class Insight {
   final InsightType type;
   final String title;
   final String description;
+  final String? supportingText;
   final InsightSeverity severity;
   final DateTime dateGenerated;
   final IconData icon;
@@ -21,6 +22,7 @@ class Insight {
     required this.type,
     required this.title,
     required this.description,
+    this.supportingText,
     required this.severity,
     required this.dateGenerated,
     required this.icon,

@@ -21,6 +21,8 @@ import '../../widgets/surface_card.dart';
 import '../../widgets/primary_button.dart';
 import '../../utils/meal_icons.dart';
 import 'widgets/photo_calorie_scanner_sheet.dart';
+import 'widgets/add_serving_sheet.dart';
+import '../../utils/meal_serving.dart';
 import 'widgets/add_meal_slot_dialog.dart';
 import 'widgets/ai_meal_suggestion_card.dart';
 import '../meals/widgets/barcode_food_sheet.dart';
@@ -844,8 +846,7 @@ class _MealSlotCardState extends ConsumerState<_MealSlotCard> {
                                 foregroundColor: context.colors.primary,
                                 minimumSize: const Size(48, 48),
                               ),
-                              onPressed: () =>
-                                  _openScanner(context, false, append: true),
+                              onPressed: _openAddServing,
                               icon: const Icon(
                                 Icons.add_circle_outline_rounded,
                                 size: IconSize.inline,
@@ -1254,6 +1255,40 @@ class _MealSlotCardState extends ConsumerState<_MealSlotCard> {
         targetDate: targetDate,
       ),
     );
+  }
+
+  Future<void> _openAddServing() async {
+    final log = widget.slotLog;
+    if (log == null) return;
+    if (!log.items.any((item) => MealServing.canRepeat(log, item))) {
+      _openScanner(context, false, append: true);
+      return;
+    }
+    final date = ref.read(dateStringProvider);
+    final account = ref.read(accountGenerationProvider);
+    final result = await showAppBottomSheet<AddServingResult>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (_) => AddServingSheet(
+        slotId: widget.slotId,
+        slotDisplayName: widget.slotName,
+        slotEmoji: widget.slotEmoji,
+        targetDate: date,
+        slotLog: log,
+      ),
+    );
+    if (!mounted ||
+        account != ref.read(accountGenerationProvider) ||
+        ref.read(accountTransitionProvider) ||
+        ref.read(accountHydratingProvider) ||
+        date != ref.read(dateStringProvider)) {
+      return;
+    }
+    if (result == AddServingResult.photo ||
+        result == AddServingResult.describe) {
+      _openScanner(context, result == AddServingResult.describe, append: true);
+    }
   }
 
   void _openScanner(

@@ -1,5 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:intl/intl.dart';
+import '../../../models/daily_log.dart';
+import '../../../widgets/app_bottom_sheet.dart';
+import '../../../widgets/primary_button.dart';
+import '../../../widgets/surface_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trufit_bodamma/theme/app_typography.dart';
@@ -15,16 +20,199 @@ class DayFeelingCard extends ConsumerStatefulWidget {
   final String dateStr;
   final String? initialFeeling;
   final String? initialNote;
+  final bool alwaysShowNote;
 
   const DayFeelingCard({
     super.key,
     required this.dateStr,
     this.initialFeeling,
     this.initialNote,
+    this.alwaysShowNote = false,
   });
 
   @override
   ConsumerState<DayFeelingCard> createState() => _DayFeelingCardState();
+}
+
+final _checkInLogProvider = StreamProvider.autoDispose
+    .family<DailyLog?, String>((ref, date) {
+      ref.watch(accountGenerationProvider);
+      return ref.watch(dailyLogRepoProvider).watchLog(date);
+    });
+
+const _feelingLabels = {
+  'veryLow': 'Struggled',
+  'low': 'Tired',
+  'okay': 'Okay',
+  'good': 'Steady',
+  'great': 'Thriving',
+};
+
+/// A private summary on Home; the editor keeps the existing save lifecycle.
+class DayCheckInTile extends ConsumerWidget {
+  const DayCheckInTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final log = ref.watch(dailyLogProvider);
+    final generation = ref.watch(accountGenerationProvider);
+    final transitioning = ref.watch(accountTransitionProvider);
+    final hydrating = ref.watch(accountHydratingProvider);
+    final recovery = ref.watch(_reflectionRecoveryProvider)[log.date];
+    final draft = recovery != null && recovery.draft.isCurrentAccount()
+        ? recovery
+        : null;
+    final now = ref.watch(clockProvider);
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime.tryParse(log.date);
+    final future = date == null || date.isAfter(today);
+    final enabled = !future && !transitioning && !hydrating;
+    final feeling = _feelingLabels[log.dayFeeling];
+    final hasNote = log.dayNote?.trim().isNotEmpty ?? false;
+    final summary = [?feeling, if (hasNote) 'Note added'].join(' \u00b7 ');
+    final subtitle = transitioning || hydrating
+        ? 'Loading check-in\u2026'
+        : future
+        ? 'Check in when this day arrives.'
+        : draft != null
+        ? draft.failed
+              ? 'Not saved. Tap to retry.'
+              : 'Saving\u2026'
+        : summary.isNotEmpty
+        ? summary
+        : date == today
+        ? 'How did today feel?'
+        : 'How did this day feel?';
+
+    return SurfaceCard(
+      onTap: !enabled
+          ? null
+          : () {
+              if (ref.read(accountTransitionProvider) ||
+                  ref.read(accountHydratingProvider) ||
+                  generation != ref.read(accountGenerationProvider)) {
+                return;
+              }
+              showAppBottomSheet<void>(
+                context: context,
+                builder: (_) => _DailyCheckInSheet(
+                  date: log.date,
+                  accountGeneration: generation,
+                ),
+              );
+            },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(Spacing.stack),
+            decoration: BoxDecoration(
+              color: context.colors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(Radii.chip),
+            ),
+            child: Icon(
+              Icons.self_improvement_rounded,
+              color: context.colors.primary,
+              size: IconSize.nav,
+            ),
+          ),
+          const SizedBox(width: Spacing.block),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Daily check-in', style: context.text.cardTitle),
+                const SizedBox(height: Spacing.textPair),
+                Semantics(
+                  liveRegion: draft?.failed ?? false,
+                  child: Text(subtitle, style: context.text.caption),
+                ),
+              ],
+            ),
+          ),
+          if (enabled) ...[
+            const SizedBox(width: Spacing.inline),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: IconSize.row,
+              color: context.colors.textMedium,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyCheckInSheet extends ConsumerWidget {
+  const _DailyCheckInSheet({
+    required this.date,
+    required this.accountGeneration,
+  });
+
+  final String date;
+  final int accountGeneration;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    void closeForAccountChange() {
+      if (!context.mounted) return;
+      final route = ModalRoute.of(context);
+      if (route == null || !route.isActive) return;
+      final navigator = Navigator.of(context);
+      // Any confirmation above this editor belongs to the departing account.
+      navigator.popUntil((candidate) => candidate == route);
+      if (route.isCurrent) navigator.pop();
+    }
+
+    ref.listen(accountGenerationProvider, (_, next) {
+      if (next != accountGeneration) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => closeForAccountChange(),
+        );
+      }
+    });
+    ref.listen(accountTransitionProvider, (_, next) {
+      if (next) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => closeForAccountChange(),
+        );
+      }
+    });
+    if (ref.watch(accountGenerationProvider) != accountGeneration ||
+        ref.watch(accountTransitionProvider)) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => closeForAccountChange(),
+      );
+      return const SizedBox.shrink();
+    }
+
+    // The calendar can move while this route is open; edits keep their date.
+    final log =
+        ref.watch(_checkInLogProvider(date)).valueOrNull ??
+        ref.read(dailyLogRepoProvider).getOrCreate(date);
+    return AppSheet(
+      title: 'Daily check-in',
+      subtitle: DateFormat('EEE, d MMM yyyy').format(DateTime.parse(date)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DayFeelingCard(
+            key: ValueKey((accountGeneration, date)),
+            dateStr: date,
+            initialFeeling: log.dayFeeling,
+            initialNote: log.dayNote,
+            alwaysShowNote: true,
+          ),
+          const SizedBox(height: Spacing.block),
+          PrimaryButton(
+            label: 'Done',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 typedef _ReflectionDraft = ({
@@ -228,6 +416,18 @@ class _DayFeelingCardState extends ConsumerState<DayFeelingCard> {
 
   void _enqueue(_ReflectionDraft draft) {
     if (_isCurrent(draft)) setState(() => _status = _SaveStatus.saving);
+    if (draft.isCurrentAccount()) {
+      final recovery = ref.read(_reflectionRecoveryProvider.notifier);
+      final entry = recovery.state[draft.date];
+      if (entry != null &&
+          entry.failed &&
+          identical(entry.draft.token, draft.token)) {
+        recovery.state = {
+          ...recovery.state,
+          draft.date: (draft: draft, failed: false),
+        };
+      }
+    }
     ref.read(_reflectionWriterProvider).enqueue(draft);
   }
 
@@ -358,11 +558,11 @@ class _DayFeelingCardState extends ConsumerState<DayFeelingCard> {
     final status = switch (_status) {
       _SaveStatus.idle => selectedIndex >= 0 || hasNote ? 'Saved' : 'Optional',
       _SaveStatus.waiting || _SaveStatus.saving => 'Saving…',
-      _SaveStatus.saved => selectedIndex >= 0 || hasNote ? 'Saved' : 'Cleared',
+      _SaveStatus.saved => selectedIndex >= 0 || hasNote ? 'Saved' : 'Optional',
       _SaveStatus.failed => 'Not saved. Your draft is here.',
     };
 
-    final noteEditor = !_showNote || !enabled
+    final noteEditor = (!widget.alwaysShowNote && !_showNote) || !enabled
         ? const SizedBox.shrink()
         : Padding(
             padding: const EdgeInsets.only(top: Spacing.stack),
@@ -399,7 +599,7 @@ class _DayFeelingCardState extends ConsumerState<DayFeelingCard> {
                 style: context.text.bodyStrong,
               ),
             ),
-            if (enabled)
+            if (enabled && !widget.alwaysShowNote)
               IconButton(
                 tooltip: _showNote
                     ? 'Close reflection note'
@@ -516,7 +716,7 @@ class _DayFeelingCardState extends ConsumerState<DayFeelingCard> {
               );
             },
           ),
-        if (!_showNote && hasNote)
+        if (!widget.alwaysShowNote && !_showNote && hasNote)
           Padding(
             padding: const EdgeInsets.only(top: Spacing.stack),
             child: InkWell(

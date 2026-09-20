@@ -76,10 +76,16 @@ class DailyInsightCard extends ConsumerWidget {
               const SizedBox(height: Gap.x4),
               Text(
                 insight.description,
-                style: context.text.caption.copyWith(
-                  color: context.colors.textMedium,
-                ),
+                style: insight.supportingText == null
+                    ? context.text.caption.copyWith(
+                        color: context.colors.textMedium,
+                      )
+                    : context.text.bodyStrong,
               ),
+              if (insight.supportingText case final supportingText?) ...[
+                const SizedBox(height: Gap.x4),
+                Text(supportingText, style: context.text.caption),
+              ],
             ],
           ),
         )

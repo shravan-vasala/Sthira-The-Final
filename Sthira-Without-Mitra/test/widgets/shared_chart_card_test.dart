@@ -69,6 +69,57 @@ Offset _barPoint(WidgetTester tester, int index, int count) {
 }
 
 void main() {
+  for (final range in [
+    ChartTimeFormat.weekly,
+    ChartTimeFormat.oneMonth,
+    ChartTimeFormat.threeMonths,
+    ChartTimeFormat.sixMonths,
+    ChartTimeFormat.twelveMonths,
+  ]) {
+    testWidgets(
+      'Activity charts preserve short-range bars and long-range lines: $range',
+      (tester) async {
+        await tester.pumpWidget(
+          _app(
+            _card(
+              _points([4000, 0, null, 7000]),
+              type: ChartPlotType.bar,
+              timeFormat: range,
+            ),
+          ),
+        );
+        final daily =
+            range == ChartTimeFormat.weekly ||
+            range == ChartTimeFormat.oneMonth;
+        expect(find.byType(BarChart), daily ? findsOneWidget : findsNothing);
+        expect(find.byType(LineChart), daily ? findsNothing : findsOneWidget);
+        if (daily) {
+          expect(
+            find.byKey(const ValueKey('chart-recorded-zero-1')),
+            findsOneWidget,
+          );
+        } else {
+          final chart = tester.widget<LineChart>(find.byType(LineChart));
+          expect(chart.data.lineBarsData, hasLength(2));
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  for (final range in [ChartTimeFormat.weekly, ChartTimeFormat.oneMonth]) {
+    testWidgets(
+      'Body measurements retain their existing short-range lines: $range',
+      (tester) async {
+        await tester.pumpWidget(
+          _app(_card(_points([80, 79.8, 80.1]), timeFormat: range)),
+        );
+        expect(find.byType(LineChart), findsOneWidget);
+        expect(find.byType(BarChart), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('All missing readings show the empty state, not a zero graph', (
     tester,
   ) async {

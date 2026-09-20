@@ -193,22 +193,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                       const SizedBox(height: Spacing.section),
 
-                      // 8. Day Feeling Reflection
-                      Consumer(
-                        builder: (context, ref, _) {
-                          final log = ref.watch(dailyLogProvider);
-                          return StaggeredFadeIn(
-                            key: const ValueKey('day_feeling_card'),
-                            index: 7,
-                            child: SurfaceCard(
-                              child: DayFeelingCard(
-                                dateStr: log.date,
-                                initialFeeling: log.dayFeeling,
-                                initialNote: log.dayNote,
-                              ),
-                            ),
-                          );
-                        },
+                      // 8. Daily check-in
+                      const StaggeredFadeIn(
+                        key: ValueKey('day_feeling_card'),
+                        index: 7,
+                        child: DayCheckInTile(),
                       ),
                     ],
                   ),

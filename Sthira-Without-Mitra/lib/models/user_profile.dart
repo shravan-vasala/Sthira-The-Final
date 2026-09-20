@@ -22,6 +22,7 @@ class UserProfile {
   final double? currentWeight; // in kg
   final int? age;
   final String? gender; // 'M' or 'F'
+  final String? activityLevel;
 
   @ignore
   final List<Map<String, dynamic>> customHabits;
@@ -70,6 +71,7 @@ class UserProfile {
     this.currentWeight,
     this.age,
     this.gender,
+    this.activityLevel,
     List<Map<String, dynamic>>? customHabits,
     List<Map<String, dynamic>>? customMealSlots,
     this.geminiApiKey,
@@ -154,6 +156,7 @@ class UserProfile {
       currentWeight: (json['currentWeight'] as num?)?.toDouble(),
       age: (json['age'] as num?)?.toInt(),
       gender: json['gender'] as String?,
+      activityLevel: json['activityLevel'] as String?,
       customHabits:
           (json['customHabits'] as List?)
               ?.map((h) => Map<String, dynamic>.from(h as Map))
@@ -216,6 +219,7 @@ class UserProfile {
     if (currentWeight != null) 'currentWeight': currentWeight,
     if (age != null) 'age': age,
     if (gender != null) 'gender': gender,
+    if (activityLevel != null) 'activityLevel': activityLevel,
     'customHabits': customHabits,
     'customMealSlots': customMealSlots,
     'restTimerSound': restTimerSound,
@@ -243,6 +247,7 @@ class UserProfile {
     double? currentWeight,
     int? age,
     String? gender,
+    String? activityLevel,
     List<Map<String, dynamic>>? customHabits,
     List<Map<String, dynamic>>? customMealSlots,
     String? geminiApiKey,
@@ -279,6 +284,7 @@ class UserProfile {
           : (currentWeight ?? this.currentWeight),
       age: age ?? this.age,
       gender: gender ?? this.gender,
+      activityLevel: activityLevel ?? this.activityLevel,
       customHabits: customHabits ?? this.customHabits,
       customMealSlots: customMealSlots ?? this.customMealSlots,
       geminiApiKey: clearGeminiApiKey

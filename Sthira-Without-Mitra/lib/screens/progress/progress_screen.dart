@@ -134,7 +134,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         final m = _clampMonth(d, 6);
         return DateTime(m.year, m.month, m.day + 1);
       case TimeRange.twelveMonths:
-        return DateTime(d.year, d.month - 11, 1);
+        final m = _clampMonth(d, 12);
+        return DateTime(m.year, m.month, m.day + 1);
     }
   }
 

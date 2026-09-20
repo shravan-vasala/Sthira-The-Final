@@ -64,6 +64,7 @@ class ProfileAvatar extends ConsumerWidget {
     final generation = ref.watch(accountGenerationProvider);
     final transitioning = ref.watch(accountTransitionProvider);
     final path = photoPath?.trim();
+    final isPreset = path?.startsWith('assets/avatars/') == true;
     ImageProvider? image;
     if (!transitioning && path != null && path.isNotEmpty) {
       if (path.startsWith('assets/')) {
@@ -89,10 +90,21 @@ class ProfileAvatar extends ConsumerWidget {
                   image: image,
                   width: size,
                   height: size,
-                  fit: BoxFit.cover,
+                  fit: isPreset ? BoxFit.contain : BoxFit.cover,
                   gaplessPlayback: false,
-                  frameBuilder: (context, child, frame, synchronous) =>
-                      frame != null || synchronous ? child : _fallback(context),
+                  frameBuilder: (context, child, frame, synchronous) {
+                    if (frame == null && !synchronous) {
+                      return _fallback(context);
+                    }
+                    // Preset ears and antlers need room inside the circle.
+                    // Photos still fill the frame without an artificial inset.
+                    return isPreset
+                        ? Padding(
+                            padding: EdgeInsets.all(size * .08),
+                            child: child,
+                          )
+                        : child;
+                  },
                   errorBuilder: (context, error, stack) => _fallback(context),
                 ),
         ),

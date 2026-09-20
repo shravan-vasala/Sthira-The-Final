@@ -100,7 +100,7 @@ void main() {
   });
 
   testWidgets(
-    'expert starting target stays until user explicitly requests suggestion',
+    'expert starting target stays until a preview is explicitly applied',
     (tester) async {
       narrow(tester);
       double? changed;
@@ -124,6 +124,18 @@ void main() {
       expect(find.text('Expert-suggested starting target'), findsOneWidget);
       await tester.ensureVisible(find.text('Suggest for me'));
       await tester.tap(find.text('Suggest for me'));
+      await tester.pumpAndSettle();
+      expect(changed, isNull);
+      await tester.ensureVisible(find.byTooltip('Close'));
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(changed, isNull);
+      expect(find.text('1250 kcal'), findsOneWidget);
+      await tester.ensureVisible(find.text('Suggest for me'));
+      await tester.tap(find.text('Suggest for me'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Use these targets'));
+      await tester.tap(find.text('Use these targets'));
       await tester.pumpAndSettle();
       expect(changed, isNotNull);
       expect(find.text('Suggested estimate'), findsOneWidget);

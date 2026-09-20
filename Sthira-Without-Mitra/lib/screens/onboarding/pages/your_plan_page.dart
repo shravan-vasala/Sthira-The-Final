@@ -4,6 +4,8 @@ import '../../../models/habit.dart';
 import '../../../utils/habit_icons.dart';
 import '../../../utils/target_calculator.dart';
 import '../../../widgets/section_header.dart';
+import '../../../widgets/app_bottom_sheet.dart';
+import '../../../widgets/target_estimate_sheet.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:trufit_bodamma/theme/app_typography.dart';
 import '../../../theme/app_motion.dart';
@@ -13,6 +15,14 @@ class YourPlanPage extends StatefulWidget {
   final TargetMacros? initialMacros;
   final double? heightCm;
   final double? weightKg;
+  final int? age;
+  final String? gender;
+  final String? activityLevel;
+  final String? goal;
+  final bool useKg;
+  final int estimateSession;
+  final bool estimatesEnabled;
+  final ValueChanged<TargetEstimate>? onEstimateApplied;
   final List<String> selectedHabitIds;
   final bool isManuallyEdited;
   final void Function(double, bool) onCaloriesChanged;
@@ -25,6 +35,14 @@ class YourPlanPage extends StatefulWidget {
     this.initialMacros,
     required this.heightCm,
     this.weightKg,
+    this.age,
+    this.gender,
+    this.activityLevel,
+    this.goal,
+    this.useKg = true,
+    this.estimateSession = 0,
+    this.estimatesEnabled = true,
+    this.onEstimateApplied,
     required this.selectedHabitIds,
     required this.isManuallyEdited,
     required this.onCaloriesChanged,
@@ -40,23 +58,60 @@ class _YourPlanPageState extends State<YourPlanPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _staggerController;
   late double _currentCalories;
-  TargetMacros? _macroPreview;
+  late double _sliderMax;
+
+  double _rangeMaximum(double calories) =>
+      calories > 4000 ? (calories / 50).ceil() * 50.0 : 4000;
+  TargetMacros? _currentMacros;
+  TargetMacros? _macroBase;
+  late TargetEstimateInputs _inputs;
   bool _usedSuggestion = false;
+  bool _estimateNeedsRefresh = false;
+  bool _suggesting = false;
+
+  TargetEstimateInputs _widgetInputs() => TargetEstimateInputs(
+    heightCm: widget.heightCm ?? TargetCalculator.defaultHeightCm,
+    weightKg: widget.weightKg ?? TargetCalculator.defaultWeightKg,
+    age: widget.age ?? TargetCalculator.defaultAge,
+    gender: widget.gender ?? TargetCalculator.defaultGender,
+    activityLevel: TargetCalculator.normalizeActivityLevel(
+      widget.activityLevel,
+    ),
+    goal: TargetCalculator.normalizeGoal(widget.goal),
+  );
 
   @override
   void initState() {
     super.initState();
     _currentCalories = widget.initialCalories;
+    _sliderMax = _rangeMaximum(_currentCalories);
+    _inputs = _widgetInputs();
+    _macroBase = widget.initialMacros;
+    if (_macroBase == null) {
+      try {
+        _macroBase = TargetCalculator.estimate(_inputs).targets;
+      } on FormatException {
+        // Invalid imported details can be corrected in the estimate sheet.
+      }
+    }
+    _currentMacros =
+        widget.initialMacros ??
+        (_macroBase == null
+            ? null
+            : TargetCalculator.rebalanceForCalories(
+                _currentCalories.round(),
+                _macroBase!,
+              ));
     _staggerController = AnimationController(
       vsync: this,
       duration: Motion.deliberate,
     );
     _staggerController.forward();
-    _updateMacroPreview();
-    final macros = _getDynamicMacrosForCalories(_currentCalories);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onMacrosChanged?.call(macros);
-    });
+    if (widget.initialMacros == null && _currentMacros != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onMacrosChanged?.call(_currentMacros);
+      });
+    }
   }
 
   @override
@@ -65,43 +120,81 @@ class _YourPlanPageState extends State<YourPlanPage>
     super.dispose();
   }
 
+  bool _sameMacros(TargetMacros? a, TargetMacros? b) =>
+      a?.calories == b?.calories &&
+      a?.proteinG == b?.proteinG &&
+      a?.carbsG == b?.carbsG &&
+      a?.fatG == b?.fatG;
+
   @override
   void didUpdateWidget(YourPlanPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.initialCalories != oldWidget.initialCalories &&
         widget.initialCalories != _currentCalories) {
       _currentCalories = widget.initialCalories;
+      _sliderMax = _rangeMaximum(_currentCalories);
+      _currentMacros = widget.initialMacros;
+      _macroBase = widget.initialMacros ?? _macroBase;
       _usedSuggestion = false;
+      _estimateNeedsRefresh = false;
+    }
+    if (widget.initialMacros != null &&
+        !_sameMacros(widget.initialMacros, oldWidget.initialMacros) &&
+        !_sameMacros(widget.initialMacros, _currentMacros)) {
+      _currentMacros = widget.initialMacros;
+      _macroBase = widget.initialMacros;
+      _usedSuggestion = false;
+      _estimateNeedsRefresh = false;
     }
     if (widget.heightCm != oldWidget.heightCm ||
-        widget.weightKg != oldWidget.weightKg) {
-      _updateMacroPreview();
-      final macros = _getDynamicMacrosForCalories(_currentCalories);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onMacrosChanged?.call(macros);
-      });
+        widget.weightKg != oldWidget.weightKg ||
+        widget.age != oldWidget.age ||
+        widget.gender != oldWidget.gender ||
+        widget.activityLevel != oldWidget.activityLevel ||
+        widget.goal != oldWidget.goal) {
+      final next = _widgetInputs();
+      final changed =
+          next.heightCm != _inputs.heightCm ||
+          next.weightKg != _inputs.weightKg ||
+          next.age != _inputs.age ||
+          next.gender != _inputs.gender ||
+          next.activityLevel != _inputs.activityLevel ||
+          next.goal != _inputs.goal;
+      _inputs = next;
+      if (changed && _usedSuggestion) _estimateNeedsRefresh = true;
     }
   }
 
-  void _updateMacroPreview() {
-    _macroPreview = TargetCalculator.calculate(
-      heightCm: widget.heightCm,
-      weightKg: widget.weightKg,
-      age: null,
-      gender: null,
-      goal: 'Maintain',
-      activityLevel: null,
-    );
-  }
-
-  void _suggestMacros() {
-    if (_macroPreview != null) {
+  Future<void> _suggestMacros() async {
+    if (_suggesting || !widget.estimatesEnabled) return;
+    final session = widget.estimateSession;
+    setState(() => _suggesting = true);
+    try {
+      final estimate = await showAppBottomSheet<TargetEstimate>(
+        context: context,
+        builder: (_) =>
+            TargetEstimateSheet(initialInputs: _inputs, useKg: widget.useKg),
+      );
+      if (!mounted ||
+          estimate == null ||
+          !widget.estimatesEnabled ||
+          session != widget.estimateSession) {
+        return;
+      }
       setState(() {
+        _inputs = estimate.inputs;
+        _macroBase = estimate.targets;
+        _currentMacros = estimate.targets;
         _usedSuggestion = true;
-        _currentCalories = _macroPreview!.calories.toDouble();
-        widget.onCaloriesChanged(_currentCalories, false);
-        widget.onMacrosChanged?.call(_macroPreview);
+        _estimateNeedsRefresh = false;
+        _currentCalories = estimate.targets.calories.toDouble();
+        _sliderMax = _rangeMaximum(_currentCalories);
       });
+      widget.onCaloriesChanged(_currentCalories, false);
+      widget.onMacrosChanged?.call(estimate.targets);
+      widget.onEstimateApplied?.call(estimate);
+    } finally {
+      if (mounted) setState(() => _suggesting = false);
     }
   }
 
@@ -138,21 +231,9 @@ class _YourPlanPageState extends State<YourPlanPage>
     );
   }
 
-  TargetMacros? _getDynamicMacrosForCalories(double cal) {
-    if (!_usedSuggestion &&
-        widget.initialMacros != null &&
-        cal.round() == widget.initialMacros!.calories)
-      return widget.initialMacros;
-    if (_macroPreview == null) return null;
-    return TargetCalculator.rebalanceForCalories(
-      cal.round(),
-      _usedSuggestion ? _macroPreview! : widget.initialMacros ?? _macroPreview!,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final dynamicMacros = _getDynamicMacrosForCalories(_currentCalories);
+    final dynamicMacros = _currentMacros;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -187,7 +268,9 @@ class _YourPlanPageState extends State<YourPlanPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _usedSuggestion
+                  _estimateNeedsRefresh
+                      ? 'Estimate needs review'
+                      : _usedSuggestion
                       ? 'Suggested estimate'
                       : widget.isManuallyEdited
                       ? 'Your current target'
@@ -203,35 +286,43 @@ class _YourPlanPageState extends State<YourPlanPage>
                     color: context.colors.primary,
                   ),
                 ),
-                if (_macroPreview != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                    child: ActionChip(
-                      label: const Text('Suggest for me'),
-                      avatar: const Icon(Icons.auto_awesome_rounded, size: 16),
-                      backgroundColor: context.colors.primary.withValues(
-                        alpha: 0.15,
-                      ),
-                      labelStyle: context.text.body.copyWith(
-                        color: context.colors.primary,
-                      ),
-                      side: BorderSide.none,
-                      onPressed: _suggestMacros,
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                  child: ActionChip(
+                    label: const Text('Suggest for me'),
+                    avatar: const Icon(Icons.auto_awesome_rounded, size: 16),
+                    backgroundColor: context.colors.primary.withValues(
+                      alpha: 0.15,
                     ),
+                    labelStyle: context.text.body.copyWith(
+                      color: context.colors.primary,
+                    ),
+                    side: BorderSide.none,
+                    onPressed: _suggesting || !widget.estimatesEnabled
+                        ? null
+                        : _suggestMacros,
                   ),
+                ),
                 const SizedBox(height: 12),
                 Slider(
-                  value: _currentCalories.clamp(1200, 4000).toDouble(),
+                  value: _currentCalories.clamp(1200, _sliderMax).toDouble(),
                   min: 1200,
-                  max: 4000,
-                  divisions: (4000 - 1200) ~/ 50,
+                  max: _sliderMax,
+                  divisions: ((_sliderMax) - 1200) ~/ 50,
                   onChanged: (v) {
                     setState(() {
                       _currentCalories = v;
                       _usedSuggestion = false;
+                      _estimateNeedsRefresh = false;
                     });
                     widget.onCaloriesChanged(v, true);
-                    final dynamicMacros = _getDynamicMacrosForCalories(v);
+                    final dynamicMacros = _macroBase == null
+                        ? null
+                        : TargetCalculator.rebalanceForCalories(
+                            v.round(),
+                            _macroBase!,
+                          );
+                    setState(() => _currentMacros = dynamicMacros);
                     if (dynamicMacros != null) {
                       widget.onMacrosChanged?.call(dynamicMacros);
                     }
@@ -255,27 +346,13 @@ class _YourPlanPageState extends State<YourPlanPage>
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Builder(
-                          builder: (ctx) {
-                            final List<String> defaults = [];
-                            if (widget.heightCm == null) defaults.add('Height');
-                            if (widget.weightKg == null) defaults.add('Weight');
-                            defaults.add('age 29');
-                            defaults.add('female sex');
-                            defaults.add('sedentary activity');
-                            defaults.add('maintenance goal');
-
-                            if (defaults.isEmpty) {
-                              return const SizedBox();
-                            }
-                            return Text(
-                              'Suggest for me uses ${defaults.join(', ')}. Targets are editable and separate from the meal plan portions.',
-                              style: context.text.micro.copyWith(
-                                color: context.colors.textMedium,
-                              ),
-                              textAlign: TextAlign.left,
-                            );
-                          },
+                        Text(
+                          _estimateNeedsRefresh
+                              ? 'Your details changed. Suggest again to update these targets.'
+                              : 'Suggest for me lets you edit your details. Targets stay separate from your meal plan portions.',
+                          style: context.text.micro.copyWith(
+                            color: context.colors.textMedium,
+                          ),
                         ),
                       ],
                     ),

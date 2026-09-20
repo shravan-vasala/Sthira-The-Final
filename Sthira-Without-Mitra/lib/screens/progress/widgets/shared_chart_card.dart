@@ -70,6 +70,8 @@ class SharedChartCard extends StatelessWidget {
     this.onPointTap,
     this.selectedDate,
     this.expandChart = false,
+    this.embedded = false,
+    this.compactLegend = false,
   });
 
   final MetricSpec metric;
@@ -95,6 +97,8 @@ class SharedChartCard extends StatelessWidget {
   final void Function(ChartDataPoint point)? onPointTap;
   final DateTime? selectedDate;
   final bool expandChart;
+  final bool embedded;
+  final bool compactLegend;
 
   bool get _daily =>
       timeFormat == ChartTimeFormat.weekly ||
@@ -219,11 +223,12 @@ class SharedChartCard extends StatelessWidget {
     spacing: 16,
     runSpacing: 8,
     children: [
-      _legendItem(
-        context,
-        _aggregated ? 'Period average' : 'Recorded',
-        dot: true,
-      ),
+      if (!compactLegend || _hasTrend)
+        _legendItem(
+          context,
+          _aggregated ? 'Period average' : 'Recorded',
+          dot: true,
+        ),
       if (_hasTrend) _legendItem(context, '7-day average'),
       if (_valid(targetValue))
         _legendItem(
@@ -239,9 +244,13 @@ class SharedChartCard extends StatelessWidget {
       const hint = 'Tap or drag to inspect';
       final style = context.text.body.copyWith(fontWeight: FontWeight.w500);
       String label(ChartDataPoint point) {
-        final date = DateFormat(
-          _daily ? 'EEE, d MMM' : 'd MMM yyyy',
-        ).format(point.date);
+        final bucket = point.bucket;
+        final date = _aggregated && bucket != null
+            ? '${DateFormat('d MMM').format(bucket.startDate)}'
+                  '\u2013${DateFormat('d MMM yy').format(bucket.endDate)}'
+            : DateFormat(
+                _daily ? 'EEE, d MMM' : 'd MMM yyyy',
+              ).format(point.date);
         final value = _valid(point.value)
             ? '${_formatValue(point.value!)}$_unitSuffix${_aggregated ? ' average' : ''}'
             : (point.bucket?.incompleteDaysCount ?? 0) > 0
@@ -267,12 +276,15 @@ class SharedChartCard extends StatelessWidget {
         width: double.infinity,
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Text(
-            index < 0 ? hint : label(data[index]),
-            style: style.copyWith(
-              color: index < 0
-                  ? context.colors.textMedium
-                  : context.colors.textDark,
+          child: Semantics(
+            liveRegion: true,
+            child: Text(
+              index < 0 ? hint : label(data[index]),
+              style: style.copyWith(
+                color: index < 0
+                    ? context.colors.textMedium
+                    : context.colors.textDark,
+              ),
             ),
           ),
         ),
@@ -350,18 +362,22 @@ class SharedChartCard extends StatelessWidget {
             child: chartArea,
           );
     Widget card = Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: context.colors.card,
-        borderRadius: BorderRadius.circular(kCardRadius),
-      ),
+      padding: embedded ? EdgeInsets.zero : const EdgeInsets.all(20),
+      decoration: embedded
+          ? null
+          : BoxDecoration(
+              color: context.colors.card,
+              borderRadius: BorderRadius.circular(kCardRadius),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(context),
           if (_hasData) ...[
-            const SizedBox(height: 12),
-            _legend(context),
+            if (!compactLegend || _hasTrend || _valid(targetValue)) ...[
+              const SizedBox(height: 12),
+              _legend(context),
+            ],
             if (onPointTap != null) ...[
               const SizedBox(height: 16),
               _inspectionReadout(context),
@@ -781,7 +797,7 @@ class SharedChartCard extends StatelessWidget {
           show: !trend || segment.length == 1,
           checkToShowDot: (spot, bar) =>
               subtle ||
-              recorded.expand((s) => s).length <= 31 ||
+              recorded.expand((s) => s).length <= (_aggregated ? 7 : 31) ||
               segment.length == 1 ||
               spot.x == selected,
           getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(

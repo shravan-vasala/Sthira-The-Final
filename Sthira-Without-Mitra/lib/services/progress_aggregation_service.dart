@@ -60,19 +60,9 @@ class ProgressAggregationService {
         heightInMeters,
         useKg,
       );
-    } else if (range == TimeRange.threeMonths || range == TimeRange.sixMonths) {
-      return _buildWeeklyBuckets(
-        logs,
-        mealLogs,
-        metric,
-        rangeStart,
-        rangeEnd,
-        today,
-        heightInMeters,
-        useKg,
-      );
     } else {
-      return _buildMonthlyBuckets(
+      // Keep weekly detail throughout long ranges, including a full year.
+      return _buildWeeklyBuckets(
         logs,
         mealLogs,
         metric,
@@ -128,8 +118,9 @@ class ProgressAggregationService {
         }
         break;
       case MetricType.protein:
-        if (mLog != null && mLog.loggedSlotsCount > 0 && mLog.hasCompleteMacros)
+        if (mLog != null && mLog.loggedSlotsCount > 0 && mLog.hasCompleteMacros) {
           val = mLog.totalProtein;
+        }
         break;
     }
     if (val != null && (!val.isFinite || val < 0)) return null;
@@ -297,111 +288,6 @@ class ProgressAggregationService {
       );
 
       current = DateTime(current.year, current.month, current.day + 7);
-    }
-
-    return buckets;
-  }
-
-  static List<ChartBucket> _buildMonthlyBuckets(
-    List<DailyLog> logs,
-    List<DailyMealLog> mealLogs,
-    MetricType metric,
-    DateTime start,
-    DateTime end,
-    DateTime today,
-    double h,
-    bool useKg,
-  ) {
-    final logsMap = {for (var l in logs) l.date: l};
-    final mealMap = {for (var m in mealLogs) m.date: m};
-
-    final buckets = <ChartBucket>[];
-
-    DateTime currentMonthStart = DateTime(start.year, start.month, 1);
-    final endDay = DateTime(end.year, end.month, end.day);
-
-    while (!currentMonthStart.isAfter(endDay)) {
-      // Find end of month
-      int nextMonth = currentMonthStart.month + 1;
-      int nextYear = currentMonthStart.year;
-      if (nextMonth > 12) {
-        nextMonth = 1;
-        nextYear++;
-      }
-      final DateTime monthEnd = DateTime(
-        nextYear,
-        nextMonth,
-        0,
-      ); // 0th day is last day of previous month
-
-      final DateTime effectiveStart = currentMonthStart.isBefore(start)
-          ? DateTime(start.year, start.month, start.day)
-          : currentMonthStart;
-      final DateTime effectiveEnd = monthEnd.isAfter(endDay)
-          ? endDay
-          : monthEnd;
-
-      final List<double> values = [];
-      final observations = <ChartObservation>[];
-      int eligibleDays = 0;
-      int incompleteDays = 0;
-
-      DateTime d = DateTime(
-        effectiveStart.year,
-        effectiveStart.month,
-        effectiveStart.day,
-      );
-      while (!d.isAfter(effectiveEnd)) {
-        if (!d.isAfter(today)) {
-          eligibleDays++;
-          final dateStr =
-              '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-          if (_incompleteNutrition(mealMap[dateStr], metric)) incompleteDays++;
-          final val = _extractValue(
-            logsMap[dateStr],
-            mealMap[dateStr],
-            metric,
-            h,
-            useKg,
-          );
-          if (val != null) {
-            values.add(val);
-            observations.add(ChartObservation(date: d, value: val));
-          }
-        }
-        d = DateTime(d.year, d.month, d.day + 1);
-      }
-
-      double? avg;
-      double? minVal;
-      double? maxVal;
-      if (values.isNotEmpty) {
-        avg = values.reduce((a, b) => a + b) / values.length;
-        minVal = values.reduce((a, b) => a < b ? a : b);
-        maxVal = values.reduce((a, b) => a > b ? a : b);
-      }
-
-      final bool isPartial =
-          monthEnd.isAfter(today) ||
-          currentMonthStart.isBefore(start) ||
-          monthEnd.isAfter(endDay);
-
-      buckets.add(
-        ChartBucket(
-          startDate: effectiveStart,
-          endDate: effectiveEnd,
-          average: avg,
-          min: minVal,
-          max: maxVal,
-          validDaysCount: values.length,
-          eligibleDaysCount: eligibleDays,
-          incompleteDaysCount: incompleteDays,
-          isPartial: isPartial,
-          observations: List.unmodifiable(observations),
-        ),
-      );
-
-      currentMonthStart = DateTime(nextYear, nextMonth, 1);
     }
 
     return buckets;

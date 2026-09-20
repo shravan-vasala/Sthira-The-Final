@@ -13,6 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trufit_bodamma/interfaces/i_ai_food_service.dart';
 import 'package:trufit_bodamma/models/daily_meal_log.dart';
+import 'package:trufit_bodamma/models/user_profile.dart';
+import 'package:trufit_bodamma/providers/credential_provider.dart';
+import 'package:trufit_bodamma/widgets/setup_sheets.dart';
 import 'package:trufit_bodamma/models/food_nutrition.dart';
 import 'package:trufit_bodamma/providers/app_providers.dart';
 import 'package:trufit_bodamma/screens/home/widgets/photo_calorie_scanner_sheet.dart';
@@ -69,10 +72,33 @@ class _MealCapture extends DailyMealLogNotifier {
   }
 }
 
+class _ScanProfile extends ProfileNotifier {
+  @override
+  UserProfile build() => UserProfile(name: 'Test');
+  @override
+  Future<void> updateProfile(UserProfile profile) async {
+    state = profile;
+  }
+}
+
+class _ScanCredentials extends CredentialNotifier {
+  @override
+  CredentialState build() => const CredentialState(
+    status: CredentialStatus.present,
+    key: 'fixture-key',
+  );
+  @override
+  Future<void> saveKey(String key) async {
+    state = CredentialState(status: CredentialStatus.present, key: key);
+  }
+}
+
 class _FoodService implements IAiFoodService {
   final pending = <Completer<Map<String, dynamic>?>>[];
   final tokens = <CancellationToken>[];
   final photoStarted = Completer<void>();
+  @override
+  Future<void> verifyApiKey(String key) async {}
   String? hint;
   List<Uint8List>? photos;
   @override
@@ -164,6 +190,8 @@ void main() {
       ProviderScope(
         overrides: [
           authServiceProvider.overrideWithValue(_Auth()),
+          profileProvider.overrideWith(_ScanProfile.new),
+          credentialProvider.overrideWith(_ScanCredentials.new),
           geminiFoodServiceProvider.overrideWithValue(service),
           nutritionLookupServiceProvider.overrideWithValue(_Lookup()),
           if (mealCapture != null)
@@ -190,6 +218,167 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  for (final failure in [
+    AiException(
+      'PRIVATE_ERROR',
+      cause: AiErrorCause.invalidKey,
+      statusCode: 403,
+      providerCode: 'PERMISSION_DENIED',
+    ),
+    AiException(
+      'PRIVATE_ERROR',
+      cause: AiErrorCause.unknown,
+      statusCode: 400,
+      providerCode: 'INVALID_ARGUMENT',
+    ),
+    AiException(
+      'PRIVATE_ERROR',
+      cause: AiErrorCause.rateLimited,
+      statusCode: 429,
+      quotaExhausted: true,
+    ),
+  ]) {
+    testWidgets('scanner exposes safe recovery for ${failure.statusCode}', (
+      tester,
+    ) async {
+      final service = _FoodService();
+      await showScanner(
+        tester,
+        service,
+        size: const Size(320, 1000),
+        textScale: 1.5,
+      );
+      await tester.enterText(find.byType(TextField), '1 bowl rice');
+      await tester.ensureVisible(find.text('Estimate macros'));
+      await tester.tap(find.text('Estimate macros'));
+      await tester.pump();
+      service.pending.single.completeError(failure);
+      await tester.pumpAndSettle();
+      expect(find.text(failure.userMessage), findsOneWidget);
+      expect(find.textContaining('PRIVATE_ERROR'), findsNothing);
+      expect(find.text('Try again'), findsNothing);
+      expect(find.text('Describe instead'), findsNothing);
+      expect(
+        find.text('AI Settings'),
+        failure.cause == AiErrorCause.invalidKey
+            ? findsOneWidget
+            : findsNothing,
+      );
+      await tester.ensureVisible(find.text('Details'));
+      await tester.tap(find.text('Details'));
+      await tester.pumpAndSettle();
+      expect(find.text(failure.diagnosticSummary!), findsOneWidget);
+      await tester.ensureVisible(find.text('Enter yourself'));
+      await tester.tap(find.text('Enter yourself'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add Item'), findsOneWidget);
+      expect(service.pending, hasLength(1));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
+  testWidgets(
+    'scanner honors provider cooldown before retrying retained description',
+    (tester) async {
+      final service = _FoodService();
+      await showScanner(tester, service);
+      await tester.enterText(find.byType(TextField), '1 bowl rice');
+      await tester.tap(find.text('Estimate macros'));
+      await tester.pump();
+      service.pending.single.completeError(
+        AiException(
+          'busy',
+          cause: AiErrorCause.rateLimited,
+          statusCode: 429,
+          retryAfter: const Duration(seconds: 3),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Try again in 3 s'), findsOneWidget);
+      final button = find.widgetWithText(ElevatedButton, 'Try again in 3 s');
+      expect(tester.widget<ElevatedButton>(button).onPressed, isNull);
+      expect(find.text('Enter yourself'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Try again'));
+      await tester.pump();
+      expect(service.pending, hasLength(2));
+      service.pending.last.complete(_meal('Rice after cooldown'));
+      await tester.pumpAndSettle();
+      expect(find.text('Rice after cooldown'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  for (final save in [false, true]) {
+    testWidgets(
+      'AI settings result retries retained description only when saved: $save',
+      (tester) async {
+        final service = _FoodService();
+        await showScanner(tester, service);
+        await tester.enterText(find.byType(TextField), '1 bowl rice');
+        await tester.tap(find.text('Estimate macros'));
+        await tester.pump();
+        service.pending.single.completeError(
+          AiException(
+            'denied',
+            cause: AiErrorCause.invalidKey,
+            statusCode: 403,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('AI Settings'));
+        await tester.pumpAndSettle();
+        if (save) {
+          await tester.ensureVisible(find.text('Save Changes'));
+          await tester.tap(find.text('Save Changes'));
+          await tester.pump();
+          await tester.pump(const Duration(seconds: 2));
+          await tester.pump();
+          expect(service.pending, hasLength(2));
+          service.pending.last.complete(_meal('Recovered rice'));
+          await tester.pumpAndSettle();
+          expect(find.text('Recovered rice'), findsOneWidget);
+        } else {
+          Navigator.of(tester.element(find.byType(AiSetupSheet))).pop();
+          await tester.pumpAndSettle();
+          expect(service.pending, hasLength(1));
+          expect(find.text('AI Settings'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  testWidgets('account transition blocks retry before sending retained input', (
+    tester,
+  ) async {
+    final service = _FoodService();
+    await showScanner(tester, service);
+    await tester.enterText(find.byType(TextField), '1 bowl rice');
+    await tester.tap(find.text('Estimate macros'));
+    await tester.pump();
+    service.pending.single.completeError(
+      AiException('timeout', cause: AiErrorCause.timeout),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(PhotoCalorieScannerSheet)),
+    );
+    container.read(accountTransitionProvider.notifier).state = true;
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+    expect(service.pending, hasLength(1));
+    expect(
+      find.text('Date or account changed. Reopen this meal to log it.'),
+      findsOneWidget,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   for (final knownCalories in [false, true]) {
     testWidgets(

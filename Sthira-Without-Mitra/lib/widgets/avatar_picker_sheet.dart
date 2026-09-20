@@ -54,7 +54,7 @@ class AvatarPickerSheet extends StatelessWidget {
                   onTap: () => Navigator.of(context).pop(avatar['path']),
                   borderRadius: BorderRadius.circular(16),
                   child: Stack(
-                    clipBehavior: Clip.none,
+                    clipBehavior: Clip.hardEdge,
                     children: [
                       Container(
                         decoration: BoxDecoration(
@@ -76,8 +76,8 @@ class AvatarPickerSheet extends StatelessWidget {
                       ),
                       if (isSelected)
                         Positioned(
-                          right: -8,
-                          bottom: -8,
+                          right: 4,
+                          bottom: 4,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Theme.of(context).scaffoldBackgroundColor,

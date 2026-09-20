@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/layout_insets.dart';
 import '../../providers/app_providers.dart';
 import '../../models/habit.dart';
 import '../../utils/target_calculator.dart';
@@ -15,7 +15,6 @@ import 'pages/welcome_page.dart';
 import 'pages/about_you_page.dart';
 import 'pages/your_plan_page.dart';
 import 'pages/connect_page.dart';
-import 'package:trufit_bodamma/theme/app_typography.dart';
 import '../../theme/app_motion.dart';
 
 String kOnboardingCompletedKey = 'onboarding_completed';
@@ -46,10 +45,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _weightFocus = FocusNode();
 
   bool _useKg = true;
+  double? _unchangedWeightKg;
+  String? _unchangedWeightText;
+  bool? _unchangedWeightUsesKg;
+
+  double? get _draftWeightKg {
+    if (_weightController.text == _unchangedWeightText &&
+        _useKg == _unchangedWeightUsesKg) {
+      return _unchangedWeightKg;
+    }
+    final value = double.tryParse(_weightController.text);
+    return value == null ? null : value / (_useKg ? 1 : 2.20462);
+  }
+
+  void _rememberWeight(double? kilograms) {
+    _unchangedWeightKg = kilograms;
+    _unchangedWeightText = _weightController.text;
+    _unchangedWeightUsesKg = _useKg;
+  }
 
   double _targetCalories = 1250;
   bool _isCaloriesManuallyEdited = false;
   TargetMacros? _targetMacros;
+  int? _estimateAge;
+  String? _estimateGender;
+  String? _estimateActivity;
+  String? _estimateGoal;
   final List<String> _selectedHabitIds = ['sleep', 'walk', 'water'];
 
   @override
@@ -59,25 +80,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final profile = ref.read(profileProvider);
     _nameController.text = profile.name;
     _coachNameController.text = profile.coachName;
-    if (profile.height != null)
-      _heightController.text = profile.height.toString();
+    final newProfile = profile.name.trim().isEmpty;
+    final initialHeight =
+        profile.height ??
+        (newProfile ? TargetCalculator.defaultHeightCm : null);
+    _heightController.text = initialHeight?.toString() ?? '';
+    _estimateAge = profile.age;
+    _estimateGender = profile.gender;
+    _estimateActivity = profile.activityLevel;
+    _estimateGoal = profile.primaryGoal;
     _useKg = profile.useKg;
-    if (profile.currentWeight != null) {
-      final double displayW = _useKg
-          ? profile.currentWeight!
-          : profile.currentWeight! * 2.20462;
+    final initialWeight =
+        profile.currentWeight ??
+        (newProfile ? TargetCalculator.defaultWeightKg : null);
+    if (initialWeight != null) {
+      final double displayW = _useKg ? initialWeight : initialWeight * 2.20462;
       _weightController.text = displayW
           .toStringAsFixed(1)
           .replaceAll(RegExp(r'\.0$'), '');
     }
+    _rememberWeight(initialWeight);
     if (profile.targetCalories > 0) {
       _targetCalories = profile.targetCalories.toDouble();
       _isCaloriesManuallyEdited = profile.name.trim().isNotEmpty;
     }
 
     _targetMacros = TargetMacros(
-      calories: profile.targetCalories, proteinG: profile.targetProteinG,
-      carbsG: profile.targetCarbsG, fatG: profile.targetFatG,
+      calories: profile.targetCalories,
+      proteinG: profile.targetProteinG,
+      carbsG: profile.targetCarbsG,
+      fatG: profile.targetFatG,
     );
     final currentHabits = ref.read(habitRepoProvider).getHabits();
     if (currentHabits.isNotEmpty) {
@@ -129,12 +161,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
       if (_currentPage < _totalPages - 1) {
         HapticFeedback.selectionClick();
-        _pageController.nextPage(
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero
-              : Motion.deliberate,
-          curve: Motion.enter,
-        );
+        _moveToPage(_currentPage + 1);
       } else {
         await _commitAllToDb();
         await ref.read(onboardingCompletedProvider.notifier).commitLocalSetup();
@@ -159,11 +186,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _goBack() {
     if (_currentPage > 0) {
       HapticFeedback.selectionClick();
-      _pageController.previousPage(
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : Motion.deliberate,
-        curve: Motion.enter,
+      _moveToPage(_currentPage - 1);
+    }
+  }
+
+  void _moveToPage(int page) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pageController.jumpToPage(page);
+    } else {
+      unawaited(
+        _pageController.animateToPage(
+          page,
+          duration: Motion.deliberate,
+          curve: Motion.enter,
+        ),
       );
     }
   }
@@ -186,14 +222,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     final wText = _weightController.text;
     if (wText.isNotEmpty) {
-      final w = double.tryParse(wText);
-      if (w != null) {
-        final double wKg = _useKg ? w : w / 2.20462;
-        if (!wKg.isFinite || wKg < 30 || wKg > 200) {
-          FocusScope.of(context).requestFocus(_weightFocus);
-          return false;
-        }
-      } else {
+      final wKg = _draftWeightKg;
+      if (wKg == null || !wKg.isFinite || wKg < 30 || wKg > 200) {
         FocusScope.of(context).requestFocus(_weightFocus);
         return false;
       }
@@ -215,12 +245,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final hText = _heightController.text;
     if (hText.isNotEmpty) finalHeight = double.tryParse(hText);
 
-    double? finalWeight;
     final wText = _weightController.text;
-    if (wText.isNotEmpty) {
-      final w = double.tryParse(wText);
-      if (w != null) finalWeight = _useKg ? w : w / 2.20462;
-    }
+    final finalWeight = _draftWeightKg;
 
     final current = ref.read(profileProvider);
     await ref
@@ -234,6 +260,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             currentWeight: finalWeight,
             clearCurrentWeight: wText.isEmpty,
             useKg: _useKg,
+            age: _estimateAge,
+            gender: _estimateGender,
+            activityLevel: _estimateActivity,
+            primaryGoal: _estimateGoal,
             targetCalories: _targetCalories.round(),
             targetProteinG: _targetMacros?.proteinG,
             targetCarbsG: _targetMacros?.carbsG,
@@ -258,8 +288,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(recoveredAccountProvider, (previous, recovered) {
-      if (recovered == null || recovered == _draftAccount ||
-          recovered != ref.read(activeAccountIdProvider)) return;
+      if (recovered == null ||
+          recovered == _draftAccount ||
+          recovered != ref.read(activeAccountIdProvider))
+        return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || recovered != ref.read(activeAccountIdProvider)) return;
         final profile = ref.read(profileProvider);
@@ -269,17 +301,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _coachNameController.text = profile.coachName;
           _heightController.text = profile.height?.toString() ?? '';
           _useKg = profile.useKg;
-          _weightController.text = profile.currentWeight == null ? '' :
-              (profile.currentWeight! * (_useKg ? 1 : 2.20462)).toStringAsFixed(1);
+          _weightController.text = profile.currentWeight == null
+              ? ''
+              : (profile.currentWeight! * (_useKg ? 1 : 2.20462))
+                    .toStringAsFixed(1);
+          _rememberWeight(profile.currentWeight);
+          _estimateAge = profile.age;
+          _estimateGender = profile.gender;
+          _estimateActivity = profile.activityLevel;
+          _estimateGoal = profile.primaryGoal;
           _targetCalories = profile.targetCalories.toDouble();
           _isCaloriesManuallyEdited = true;
           _targetMacros = TargetMacros(
-            calories: profile.targetCalories, proteinG: profile.targetProteinG,
-            carbsG: profile.targetCarbsG, fatG: profile.targetFatG,
+            calories: profile.targetCalories,
+            proteinG: profile.targetProteinG,
+            carbsG: profile.targetCarbsG,
+            fatG: profile.targetFatG,
           );
           _selectedHabitIds
             ..clear()
-            ..addAll(ref.read(habitRepoProvider).getHabits().map((habit) => habit.id));
+            ..addAll(
+              ref.read(habitRepoProvider).getHabits().map((habit) => habit.id),
+            );
         });
       });
     });
@@ -326,36 +369,54 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             onToggleUnit: () {
                               HapticFeedback.selectionClick();
                               setState(() {
-                                final wText = _weightController.text;
-                                if (wText.isNotEmpty) {
-                                  final w = double.tryParse(wText);
-                                  if (w != null) {
-                                    if (_useKg) {
-                                      _weightController.text = (w * 2.20462)
-                                          .round()
-                                          .toString();
-                                    } else {
-                                      _weightController.text = (w / 2.20462)
-                                          .toStringAsFixed(1)
-                                          .replaceAll(RegExp(r'\.0$'), '');
-                                    }
-                                  }
-                                }
+                                final canonicalWeight = _draftWeightKg;
                                 _useKg = !_useKg;
+                                if (canonicalWeight != null) {
+                                  _weightController.text =
+                                      (canonicalWeight * (_useKg ? 1 : 2.20462))
+                                          .toStringAsFixed(2)
+                                          .replaceFirst(RegExp(r'\.?0+$'), '');
+                                }
+                                _rememberWeight(canonicalWeight);
                               });
                             },
                           ),
                           YourPlanPage(
+                            key: ValueKey(ref.watch(accountGenerationProvider)),
+                            age: _estimateAge,
+                            gender: _estimateGender,
+                            activityLevel: _estimateActivity,
+                            goal: _estimateGoal,
+                            useKg: _useKg,
+                            estimateSession: ref.watch(
+                              accountGenerationProvider,
+                            ),
+                            estimatesEnabled:
+                                !ref.watch(accountTransitionProvider) &&
+                                !ref.watch(accountHydratingProvider),
+                            onEstimateApplied: (estimate) {
+                              setState(() {
+                                _estimateAge = estimate.inputs.age;
+                                _estimateGender = estimate.inputs.gender;
+                                _estimateActivity =
+                                    estimate.inputs.activityLevel;
+                                _estimateGoal = estimate.inputs.goal;
+                                _heightController.text = estimate
+                                    .inputs
+                                    .heightCm
+                                    .toString();
+                                _weightController.text =
+                                    (estimate.inputs.weightKg *
+                                            (_useKg ? 1 : 2.20462))
+                                        .toStringAsFixed(2)
+                                        .replaceFirst(RegExp(r'\.?0+$'), '');
+                                _rememberWeight(estimate.inputs.weightKg);
+                              });
+                            },
                             initialCalories: _targetCalories,
                             initialMacros: _targetMacros,
                             heightCm: double.tryParse(_heightController.text),
-                            weightKg:
-                                double.tryParse(_weightController.text) != null
-                                ? (_useKg
-                                      ? double.parse(_weightController.text)
-                                      : double.parse(_weightController.text) /
-                                            2.20462)
-                                : null,
+                            weightKg: _draftWeightKg,
                             selectedHabitIds: _selectedHabitIds,
                             isManuallyEdited: _isCaloriesManuallyEdited,
                             onCaloriesChanged: (v, manual) {

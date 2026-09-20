@@ -221,13 +221,13 @@ class _IntegrationRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: SurfaceCard(
+        // The page already owns the horizontal gutter.
+        margin: EdgeInsets.zero,
         padding: const EdgeInsets.all(16),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final stacked =
-                constraints.maxWidth < 340 ||
-                MediaQuery.textScalerOf(context).scale(14) > 18;
-            final details = Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(icon, color: context.colors.primary, size: 24),
@@ -253,8 +253,10 @@ class _IntegrationRow extends StatelessWidget {
                   ),
                 ),
               ],
-            );
-            final controls = Wrap(
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
               spacing: 12,
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -273,21 +275,8 @@ class _IntegrationRow extends StatelessWidget {
                   child: Text(statusActive ? 'Edit' : 'Set up'),
                 ),
               ],
-            );
-            if (stacked) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [details, const SizedBox(height: 12), controls],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: details),
-                const SizedBox(width: 12),
-                controls,
-              ],
-            );
-          },
+            ),
+          ],
         ),
       ),
     );

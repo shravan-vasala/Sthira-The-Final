@@ -6,6 +6,56 @@ import 'package:trufit_bodamma/screens/progress/progress_screen.dart';
 
 void main() {
   group('ProgressAggregationService Tests', () {
+    test(
+      'Yearly weekly data retains a missing week, recorded zero and exact observation dates',
+      () {
+        final start = DateTime(2025, 9, 20);
+        final end = DateTime(2026, 9, 19);
+        final logs = <DailyLog>[];
+        for (
+          var d = start;
+          !d.isAfter(end);
+          d = DateTime(d.year, d.month, d.day + 1)
+        ) {
+          if (!d.isBefore(DateTime(2026, 5, 4)) &&
+              !d.isAfter(DateTime(2026, 5, 10))) {
+            continue;
+          }
+          logs.add(
+            DailyLog(
+              date:
+                  '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+              steps: d == start ? 0 : 100,
+            ),
+          );
+        }
+        final buckets = ProgressAggregationService.aggregate(
+          logs: logs,
+          mealLogs: [],
+          metric: MetricType.steps,
+          range: TimeRange.twelveMonths,
+          rangeStart: start,
+          rangeEnd: end,
+          today: end,
+          heightInMeters: 1.8,
+          useKg: true,
+        );
+        expect(buckets.length, inInclusiveRange(52, 54));
+        expect(buckets.first.average, 50);
+        expect(buckets.first.observations.first.value, 0);
+        expect(buckets.first.observations.first.date, start);
+        final gap = buckets.singleWhere(
+          (b) => b.startDate == DateTime(2026, 5, 4),
+        );
+        expect(gap.average, isNull);
+        expect(gap.validDaysCount, 0);
+        expect(gap.eligibleDaysCount, 7);
+        expect(buckets.fold(0, (n, b) => n + b.validDaysCount), logs.length);
+        expect(buckets.fold(0, (n, b) => n + b.eligibleDaysCount), 365);
+        expect(buckets.last.observations.last.date, end);
+      },
+    );
+
     final today = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -57,22 +107,22 @@ void main() {
         useKg: true,
       );
 
-      // 12M produces monthly buckets
-      // Dec 2023 bucket
-      expect(buckets[0].startDate, DateTime(2023, 12, 15));
-      expect(buckets[0].endDate, DateTime(2023, 12, 31));
-
-      // Jan 2024 bucket
-      expect(buckets[1].startDate, DateTime(2024, 1, 1));
-      expect(buckets[1].endDate, DateTime(2024, 1, 31));
-
-      // Feb 2024 bucket (Leap year)
-      expect(buckets[2].startDate, DateTime(2024, 2, 1));
-      expect(buckets[2].endDate, DateTime(2024, 2, 29));
-
-      // Mar 2024 bucket
-      expect(buckets[3].startDate, DateTime(2024, 3, 1));
-      expect(buckets[3].endDate, DateTime(2024, 3, 5));
+      expect(buckets.first.startDate, start);
+      expect(buckets.first.endDate, DateTime(2023, 12, 17));
+      expect(buckets.last.endDate, end);
+      final leapWeek = buckets.singleWhere(
+        (b) => b.startDate == DateTime(2024, 2, 26),
+      );
+      expect(leapWeek.endDate, DateTime(2024, 3, 3));
+      expect(leapWeek.eligibleDaysCount, 7);
+      expect(
+        buckets.fold(0, (sum, b) => sum + b.eligibleDaysCount),
+        end.difference(start).inDays + 1,
+      );
+      expect(
+        buckets.every((b) => b.endDate.difference(b.startDate).inDays < 7),
+        isTrue,
+      );
     });
 
     test(
@@ -250,7 +300,7 @@ void main() {
     );
 
     test(
-      'Monthly observations preserve weight unit conversion exactly once',
+      'Yearly observations preserve weight unit conversion exactly once',
       () {
         final buckets = ProgressAggregationService.aggregate(
           logs: [DailyLog(date: '2024-05-03', weight: 100)],

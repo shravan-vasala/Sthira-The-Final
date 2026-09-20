@@ -2,10 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../services/progress_insight_service.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_typography.dart';
 import 'shared_chart_card.dart';
+import '../../../widgets/surface_card.dart';
 
 /// The overview can grow and scroll; chart space never competes with text.
 class ProgressChartContent extends StatelessWidget {
@@ -53,8 +53,6 @@ class ProgressChartContent extends StatelessWidget {
       ? metric.plotType == ChartPlotType.line
             ? 'Daily measurements'
             : 'Daily values'
-      : timeFormat == ChartTimeFormat.twelveMonths
-      ? 'Monthly averages'
       : 'Weekly averages';
 
   static String dateSpan(DateTime start, DateTime end) {
@@ -99,26 +97,23 @@ class ProgressChartContent extends StatelessWidget {
             ? context.text.display
             : context.text.metric,
       ),
+      for (final stat in insight.stats.where(
+        (stat) =>
+            stat.label == 'Change in range' &&
+            stat.value != 'Need another entry',
+      )) ...[
+        const SizedBox(height: Spacing.inline),
+        Text(
+          '${stat.value} in this range',
+          key: const Key('progress-range-change'),
+          style: context.text.bodyStrong,
+          textAlign: TextAlign.center,
+        ),
+      ],
       if (insight.heroDate != null) ...[
         const SizedBox(height: Spacing.inline),
         Text(
           'Recorded ${DateFormat('d MMM yyyy').format(insight.heroDate!)}',
-          style: context.text.caption,
-          textAlign: TextAlign.center,
-        ),
-      ],
-      if (insight.insightText != null) ...[
-        const SizedBox(height: Spacing.block),
-        Text(
-          insight.insightText!,
-          textAlign: TextAlign.center,
-          style: context.text.body.copyWith(color: context.colors.textMedium),
-        ),
-      ],
-      if (insight.coverageText.isNotEmpty) ...[
-        const SizedBox(height: Spacing.inline),
-        Text(
-          insight.coverageText,
           style: context.text.caption,
           textAlign: TextAlign.center,
         ),
@@ -145,24 +140,6 @@ class ProgressChartContent extends StatelessWidget {
               width: width,
               child: Column(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: context.colors.card.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      [
-                        Icons.insights_outlined,
-                        Icons.calendar_today_outlined,
-                        Icons.assessment_outlined,
-                      ][i % 3],
-                      size: 20,
-                      color: context.colors.accentText,
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.stack),
                   Text(
                     insight.stats[i].value,
                     style: context.text.cardTitle,
@@ -196,10 +173,10 @@ class ProgressChartContent extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.block),
       child: Material(
-        color: context.colors.insetSurface,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(Radii.card),
         child: Padding(
-          padding: const EdgeInsets.all(Spacing.block),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -208,16 +185,6 @@ class ProgressChartContent extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(pointLabel(point), style: context.text.caption),
-                    Text(
-                      value == null
-                          ? (b != null && b.incompleteDaysCount > 0
-                                ? 'Nutrition incomplete'
-                                : 'No entry recorded')
-                          : valueText(value),
-                      style: context.text.cardTitle,
-                      key: const Key('progress-selected-value'),
-                    ),
                     if (isToday && value != null)
                       Text('Today so far', style: context.text.caption),
                     if (!daily && b != null)
@@ -278,14 +245,30 @@ class ProgressChartContent extends StatelessWidget {
   Widget _records(BuildContext context) => Material(
     color: Colors.transparent,
     child: ExpansionTile(
-      key: ValueKey('records-${metric.title}-$timeFormat'),
+      key: ValueKey('details-${metric.title}-$timeFormat'),
       tilePadding: EdgeInsets.zero,
-      title: Text(
-        daily ? 'Daily records' : 'Period averages',
-        style: context.text.bodyStrong,
-      ),
-      subtitle: Text('Dates and values in a list', style: context.text.caption),
+      title: Text('Details', style: context.text.bodyStrong),
+      shape: const Border(),
+      collapsedShape: const Border(),
       children: [
+        Text(dateSpan(startDate, endDate), style: context.text.caption),
+        if (insight.insightText != null) ...[
+          const SizedBox(height: Spacing.block),
+          Text(insight.insightText!, style: context.text.body),
+        ],
+        if (goalContext != null) ...[
+          const SizedBox(height: Spacing.inline),
+          Text(goalContext!, style: context.text.caption),
+        ],
+        if (insight.stats.isNotEmpty) ...[
+          const SizedBox(height: Spacing.block),
+          _stats(context),
+        ],
+        const SizedBox(height: Spacing.block),
+        Text(
+          daily ? 'Daily records' : 'Weekly records',
+          style: context.text.bodyStrong,
+        ),
         for (final point in data)
           ListTile(
             key: ValueKey('progress-record-${point.date.toIso8601String()}'),
@@ -316,55 +299,44 @@ class ProgressChartContent extends StatelessWidget {
           _hero(context),
           const SizedBox(height: Spacing.section),
         ],
-        rangeSelector,
-        const SizedBox(height: Spacing.inline),
-        Text(
-          dateSpan(startDate, endDate),
-          style: context.text.caption,
-          textAlign: TextAlign.center,
-        ),
-        if (goalContext != null) ...[
-          const SizedBox(height: Spacing.inline),
-          Text(
-            goalContext!,
-            style: context.text.caption,
-            textAlign: TextAlign.center,
+        SurfaceCard(
+          margin: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              rangeSelector,
+              const SizedBox(height: Spacing.block),
+              SharedChartCard(
+                metric: metric,
+                subtitle: aggregation,
+                embedded: true,
+                compactLegend: true,
+                data: data,
+                trendData: trendData,
+                startDate: startDate,
+                endDate: endDate,
+                useKg: useKg,
+                onToggleUnit: onToggleUnit,
+                statLabels: const [],
+                statValues: const [],
+                timeFormat: timeFormat,
+                emptyMessage: emptyMessage,
+                targetValue: targetValue,
+                selectedDate: selectedDate,
+                onPointTap: onInspect,
+              ),
+              if (hasData) _selection(context),
+              if (insight.coverageText.isNotEmpty) ...[
+                const SizedBox(height: Spacing.block),
+                Text(insight.coverageText, style: context.text.caption),
+              ],
+              if (!hasData && emptyAction != null) emptyAction!,
+            ],
           ),
-        ],
-        const SizedBox(height: Spacing.section),
-        SharedChartCard(
-          metric: metric,
-          subtitle: aggregation,
-          data: data,
-          trendData: trendData,
-          startDate: startDate,
-          endDate: endDate,
-          useKg: useKg,
-          onToggleUnit: onToggleUnit,
-          statLabels: const [],
-          statValues: const [],
-          timeFormat: timeFormat,
-          emptyMessage: emptyMessage,
-          targetValue: targetValue,
-          selectedDate: selectedDate,
-          onPointTap: onInspect,
         ),
         if (hasData) ...[
-          _selection(context),
-          const SizedBox(height: Spacing.block),
-          if (insight.stats.isNotEmpty) _stats(context),
-          const SizedBox(height: Spacing.block),
+          const SizedBox(height: Spacing.stack),
           _records(context),
-        ] else ...[
-          if (insight.coverageText.isNotEmpty) ...[
-            const SizedBox(height: Spacing.block),
-            Text(
-              insight.coverageText,
-              style: context.text.caption,
-              textAlign: TextAlign.center,
-            ),
-          ],
-          if (emptyAction != null) emptyAction!,
         ],
       ],
     );

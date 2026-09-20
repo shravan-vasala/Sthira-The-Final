@@ -7,6 +7,8 @@ import '../../utils/meal_icons.dart';
 import '../../utils/target_calculator.dart';
 import '../../theme/app_spacing.dart';
 import '../../widgets/settings_row.dart';
+import '../../widgets/app_bottom_sheet.dart';
+import '../../widgets/target_estimate_sheet.dart';
 import '../../theme/layout_insets.dart';
 import 'package:trufit_bodamma/theme/app_typography.dart';
 
@@ -20,6 +22,94 @@ class _ManagePlansScreenState extends ConsumerState<ManagePlansScreen> {
   final _dirtyEditors = <String, bool>{};
   bool _allowExit = false;
   bool _askingToLeave = false;
+  bool _estimatingTargets = false;
+  bool _savingTargets = false;
+  String? _targetError;
+  TargetEstimateInputs? _targetDraft;
+
+  bool _ownsTargetDraft(int generation) =>
+      mounted &&
+      generation == ref.read(accountGenerationProvider) &&
+      !ref.read(accountTransitionProvider) &&
+      !ref.read(accountHydratingProvider);
+
+  Future<void> _recalculateTargets() async {
+    if (_estimatingTargets ||
+        ref.read(accountTransitionProvider) ||
+        ref.read(accountHydratingProvider)) {
+      return;
+    }
+    final generation = ref.read(accountGenerationProvider);
+    final profile = ref.read(profileProvider);
+    setState(() {
+      _estimatingTargets = true;
+      _targetError = null;
+    });
+    try {
+      final estimate = await showAppBottomSheet<TargetEstimate>(
+        context: context,
+        builder: (_) => TargetEstimateSheet(
+          initialInputs:
+              _targetDraft ??
+              TargetEstimateInputs(
+                heightCm: profile.height ?? TargetCalculator.defaultHeightCm,
+                weightKg:
+                    profile.currentWeight ?? TargetCalculator.defaultWeightKg,
+                age: profile.age ?? TargetCalculator.defaultAge,
+                gender: profile.gender ?? TargetCalculator.defaultGender,
+                activityLevel: TargetCalculator.normalizeActivityLevel(
+                  profile.activityLevel,
+                ),
+                goal: TargetCalculator.normalizeGoal(profile.primaryGoal),
+              ),
+          useKg: profile.useKg,
+        ),
+      );
+      if (estimate == null || !_ownsTargetDraft(generation)) return;
+      setState(() {
+        _targetDraft = estimate.inputs;
+        _savingTargets = true;
+      });
+      final latest = ref.read(profileProvider);
+      final inputs = estimate.inputs;
+      final targets = estimate.targets;
+      await ref
+          .read(profileProvider.notifier)
+          .updateProfile(
+            latest.copyWith(
+              height: inputs.heightCm,
+              currentWeight: inputs.weightKg,
+              age: inputs.age,
+              gender: inputs.gender,
+              activityLevel: inputs.activityLevel,
+              primaryGoal: inputs.goal,
+              targetCalories: targets.calories,
+              targetProteinG: targets.proteinG,
+              targetCarbsG: targets.carbsG,
+              targetFatG: targets.fatG,
+            ),
+          );
+      if (!mounted || !_ownsTargetDraft(generation)) return;
+      setState(() => _targetDraft = null);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Daily targets updated')));
+    } catch (_) {
+      if (_ownsTargetDraft(generation)) {
+        setState(
+          () => _targetError =
+              'Could not save your targets. Tap Recalculate to review and try again.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _estimatingTargets = false;
+          _savingTargets = false;
+        });
+      }
+    }
+  }
 
   void _dirtyChanged(String type, bool dirty) {
     if (_dirtyEditors[type] == dirty) return;
@@ -64,15 +154,22 @@ class _ManagePlansScreenState extends ConsumerState<ManagePlansScreen> {
     ref.listen(accountGenerationProvider, (_, next) {
       _dirtyEditors.clear();
       _allowExit = false;
+      _targetDraft = null;
+      _targetError = null;
     });
+    final transitioning =
+        ref.watch(accountTransitionProvider) ||
+        ref.watch(accountHydratingProvider);
     final profile = ref.watch(profileProvider);
     final workoutRepo = ref.watch(workoutRepoProvider);
     final mealRepo = ref.watch(mealRepoProvider);
 
     return PopScope(
-      canPop: _allowExit || !_dirtyEditors.values.any((dirty) => dirty),
+      canPop:
+          !_savingTargets &&
+          (_allowExit || !_dirtyEditors.values.any((dirty) => dirty)),
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _leave();
+        if (!didPop && !_savingTargets) _leave();
       },
       child: DefaultTabController(
         length: 3,
@@ -248,37 +345,11 @@ class _ManagePlansScreenState extends ConsumerState<ManagePlansScreen> {
                       ],
                     );
                     final recalculate = TextButton.icon(
-                      onPressed: () {
-                        final targets = TargetCalculator.calculate(
-                          heightCm: profile.height,
-                          weightKg:
-                              profile.currentWeight ?? profile.targetWeight,
-                          age: profile.age,
-                          gender: profile.gender,
-                          goal: profile.primaryGoal,
-                          activityLevel: 'Sedentary',
-                        );
-                        ref
-                            .read(profileProvider.notifier)
-                            .updateProfile(
-                              profile.copyWith(
-                                targetCalories: targets.calories.round(),
-                                targetProteinG: targets.proteinG.round(),
-                                targetCarbsG: targets.carbsG.round(),
-                                targetFatG: targets.fatG.round(),
-                              ),
-                            );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Targets recalculated: ${targets.calories} kcal',
-                            ),
-                            backgroundColor: context.colors.primary,
-                          ),
-                        );
-                      },
+                      onPressed: _estimatingTargets || transitioning
+                          ? null
+                          : _recalculateTargets,
                       icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-                      label: const Text('Recalculate'),
+                      label: Text(_savingTargets ? 'Saving...' : 'Recalculate'),
                       style: TextButton.styleFrom(
                         foregroundColor: context.colors.primary,
                         padding: const EdgeInsets.symmetric(
@@ -290,18 +361,36 @@ class _ManagePlansScreenState extends ConsumerState<ManagePlansScreen> {
                         ),
                       ),
                     );
-                    return Flex(
-                      direction: stacked ? Axis.vertical : Axis.horizontal,
-                      crossAxisAlignment: stacked
-                          ? CrossAxisAlignment.start
-                          : CrossAxisAlignment.center,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (stacked) summary else Expanded(child: summary),
-                        SizedBox(
-                          width: stacked ? 0 : Spacing.stack,
-                          height: stacked ? Spacing.stack : 0,
+                        Flex(
+                          direction: stacked ? Axis.vertical : Axis.horizontal,
+                          crossAxisAlignment: stacked
+                              ? CrossAxisAlignment.start
+                              : CrossAxisAlignment.center,
+                          children: [
+                            if (stacked) summary else Expanded(child: summary),
+                            SizedBox(
+                              width: stacked ? 0 : Spacing.stack,
+                              height: stacked ? Spacing.stack : 0,
+                            ),
+                            recalculate,
+                          ],
                         ),
-                        recalculate,
+                        if (_targetError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: Spacing.inline),
+                            child: Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                _targetError!,
+                                style: context.text.caption.copyWith(
+                                  color: context.colors.red,
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     );
                   },

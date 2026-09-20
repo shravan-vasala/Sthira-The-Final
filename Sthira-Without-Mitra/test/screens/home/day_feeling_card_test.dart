@@ -344,7 +344,8 @@ void main() {
         note: null,
       ));
       expect(find.text('Keep me'), findsNothing);
-      expect(find.text('Cleared'), findsOneWidget);
+      expect(find.text('Cleared'), findsNothing);
+      expect(find.text('Optional'), findsOneWidget);
     },
   );
 

@@ -3,12 +3,45 @@ class TargetMacros {
   final int proteinG;
   final int carbsG;
   final int fatG;
-
-  TargetMacros({
+  const TargetMacros({
     required this.calories,
     required this.proteinG,
     required this.carbsG,
     required this.fatG,
+  });
+}
+
+class TargetEstimateInputs {
+  final double heightCm;
+  final double weightKg;
+  final int age;
+  final String gender;
+  final String activityLevel;
+  final String goal;
+  const TargetEstimateInputs({
+    required this.heightCm,
+    required this.weightKg,
+    required this.age,
+    required this.gender,
+    required this.activityLevel,
+    required this.goal,
+  });
+}
+
+class TargetEstimate {
+  final TargetEstimateInputs inputs;
+  final double restingCalories;
+  final int maintenanceCalories;
+  final TargetMacros targets;
+  final bool calorieFloorApplied;
+  final bool proteinTargetAdjusted;
+  const TargetEstimate({
+    required this.inputs,
+    required this.restingCalories,
+    required this.maintenanceCalories,
+    required this.targets,
+    required this.calorieFloorApplied,
+    required this.proteinTargetAdjusted,
   });
 }
 
@@ -18,8 +51,88 @@ class TargetCalculator {
   static const int defaultAge = 29;
   static const String defaultGender = 'F';
   static const String defaultActivity = 'Sedentary';
+  static const String defaultGoal = 'Maintain';
+  static const int minimumCalories = 1200;
+  static const activityLevels = [
+    'Sedentary',
+    'Lightly active',
+    'Moderately active',
+    'Very active',
+    'Extra active',
+  ];
+  static const goals = ['Maintain', 'Lose weight', 'Gain weight'];
+  static const _activityFactors = [1.2, 1.375, 1.55, 1.725, 1.9];
 
-  /// Calculate suggested targets using Mifflin-St Jeor equation.
+  /// Mifflin-St Jeor energy estimate. The floor is an app constraint,
+  /// not a medical safety threshold.
+  static TargetEstimate estimate(TargetEstimateInputs inputs) {
+    if (!_inRange(inputs.heightCm, 100, 230)) {
+      throw const FormatException('Enter a height from 100 to 230 cm.');
+    }
+    if (!_inRange(inputs.weightKg, 30, 200)) {
+      throw const FormatException('Enter a weight from 30 to 200 kg.');
+    }
+    if (inputs.age < 18 || inputs.age > 100) {
+      throw const FormatException('Enter an adult age from 18 to 100.');
+    }
+    if (inputs.gender != 'F' && inputs.gender != 'M') {
+      throw const FormatException('Select female or male for the equation.');
+    }
+    final activityIndex = activityLevels.indexOf(inputs.activityLevel);
+    if (activityIndex < 0 || !goals.contains(inputs.goal)) {
+      throw const FormatException('Select an activity level and goal.');
+    }
+    final resting =
+        10 * inputs.weightKg +
+        6.25 * inputs.heightCm -
+        5 * inputs.age +
+        (inputs.gender == 'M' ? 5 : -161);
+    final maintenance = resting * _activityFactors[activityIndex];
+    final factor = switch (inputs.goal) {
+      'Lose weight' => 0.8,
+      'Gain weight' => 1.1,
+      _ => 1.0,
+    };
+    final adjusted = (maintenance * factor).round();
+    final calories = adjusted < minimumCalories ? minimumCalories : adjusted;
+    final requestedProtein = (inputs.weightKg * 1.8).round();
+    // Keep the automatic suggestion within the adult protein energy range.
+    final proteinLimit = (calories * 0.35 / 4).floor();
+    final protein = requestedProtein > proteinLimit
+        ? proteinLimit
+        : requestedProtein;
+    return TargetEstimate(
+      inputs: inputs,
+      restingCalories: resting,
+      maintenanceCalories: maintenance.round(),
+      targets: _allocate(calories, protein),
+      calorieFloorApplied: adjusted < minimumCalories,
+      proteinTargetAdjusted: protein != requestedProtein,
+    );
+  }
+
+  static bool _inRange(double value, double min, double max) =>
+      value.isFinite && value >= min && value <= max;
+
+  static String normalizeActivityLevel(String? value) {
+    return switch (value?.trim().toLowerCase()) {
+      'lightly active' || 'light' => 'Lightly active',
+      'moderately active' || 'moderate' => 'Moderately active',
+      'very active' || 'active' => 'Very active',
+      'extra active' => 'Extra active',
+      _ => defaultActivity,
+    };
+  }
+
+  static String normalizeGoal(String? value) {
+    final goal = value?.trim().toLowerCase() ?? '';
+    if (goal.contains('lose')) return 'Lose weight';
+    if (goal.contains('gain') || goal.contains('build')) return 'Gain weight';
+    return defaultGoal;
+  }
+
+  /// Compatibility entry point for optional saved profile values.
+  /// Interactive inputs should use [estimate] to surface invalid entries.
   static TargetMacros calculate({
     required double? heightCm,
     required double? weightKg,
@@ -28,112 +141,54 @@ class TargetCalculator {
     required String? goal,
     required String? activityLevel,
   }) {
-    final weight = weightKg ?? defaultWeightKg;
-    final h = heightCm ?? defaultHeightCm;
-    final a = age ?? defaultAge;
-    final isMale = (gender ?? defaultGender).toUpperCase() == 'M';
-
-    // Mifflin-St Jeor BMR
-    double bmr = (10 * weight) + (6.25 * h) - (5 * a);
-    bmr += isMale ? 5 : -161;
-
-    // Activity multiplier
-    double multiplier = 1.2; // defaultActivity (Sedentary)
-    switch ((activityLevel ?? defaultActivity).toLowerCase()) {
-      case 'lightly active':
-      case 'light':
-        multiplier = 1.375;
-        break;
-      case 'moderately active':
-      case 'moderate':
-        multiplier = 1.55;
-        break;
-      case 'very active':
-      case 'active':
-        multiplier = 1.725;
-        break;
-      case 'extra active':
-        multiplier = 1.9;
-        break;
-    }
-
-    double tdee = bmr * multiplier;
-
-    // Goal adjustment
-    if (goal != null) {
-      if (goal.toLowerCase().contains('lose')) {
-        tdee *= 0.8; // -20%
-      } else if (goal.toLowerCase().contains('gain') ||
-          goal.toLowerCase().contains('build')) {
-        tdee *= 1.1; // +10%
-      }
-    }
-
-    int targetCalories = tdee.round();
-    if (targetCalories < 1200) targetCalories = 1200;
-
-    // Macros:
-    // Protein: 1.8g / kg
-    final double protein = weight * 1.8;
-
-    // Fat: 25% of total calories
-    final double fat = (targetCalories * 0.25) / 9;
-
-    // Carbs: remainder
-    final double caloriesFromProtein = protein * 4;
-    final double caloriesFromFat = fat * 9;
-    double carbs = (targetCalories - caloriesFromProtein - caloriesFromFat) / 4;
-    if (carbs < 0) carbs = 0;
-
-    return TargetMacros(
-      calories: targetCalories,
-      proteinG: _roundToNearest5(protein),
-      fatG: _roundToNearest5(fat),
-      carbsG: _roundToNearest5(carbs),
-    );
+    final sex = gender?.trim().toLowerCase();
+    return estimate(
+      TargetEstimateInputs(
+        heightCm: heightCm != null && _inRange(heightCm, 100, 230)
+            ? heightCm
+            : defaultHeightCm,
+        weightKg: weightKg != null && _inRange(weightKg, 30, 200)
+            ? weightKg
+            : defaultWeightKg,
+        age: age != null && age >= 18 && age <= 100 ? age : defaultAge,
+        gender: sex == 'm' || sex == 'male' ? 'M' : 'F',
+        goal: normalizeGoal(goal),
+        activityLevel: normalizeActivityLevel(activityLevel),
+      ),
+    ).targets;
   }
 
-  /// Adjust calories up/down while maintaining the absolute protein target
-  /// and assigning the remainder between carbs and fat.
+  /// Retains an existing protein target where the calorie budget permits.
+  /// Unlike automatic estimates, this does not impose a new protein ratio.
   static TargetMacros rebalanceForCalories(
     int newCalories,
     TargetMacros originalBase,
   ) {
-    if (newCalories < 1200) newCalories = 1200;
-
-    // Keep protein fixed
-    double protein = originalBase.proteinG.toDouble();
-    final double caloriesFromProtein = protein * 4;
-
-    // What's left over?
-    double remainingCalories = newCalories - caloriesFromProtein;
-    if (remainingCalories < 0) {
-      // Infeasible: protein alone exceeds the targeted calories!
-      // Scale protein down heavily so it fits.
-      protein = (newCalories * 0.4) / 4;
-      remainingCalories = newCalories - (protein * 4);
+    final calories = newCalories < minimumCalories
+        ? minimumCalories
+        : newCalories;
+    if (originalBase.proteinG < 0) {
+      throw const FormatException('Protein cannot be negative.');
     }
-
-    // Assign up to 25% of total calories to fat, but not exceeding remaining
-    double targetFatCals = newCalories * 0.25;
-    if (targetFatCals > remainingCalories) {
-      targetFatCals = remainingCalories;
-    }
-    final double fat = targetFatCals / 9;
-
-    // Remainder goes to carbs
-    double carbs = (remainingCalories - targetFatCals) / 4;
-    if (carbs < 0) carbs = 0;
-
-    return TargetMacros(
-      calories: newCalories,
-      proteinG: _roundToNearest5(protein),
-      fatG: _roundToNearest5(fat),
-      carbsG: _roundToNearest5(carbs),
-    );
+    return _allocate(calories, originalBase.proteinG);
   }
 
-  static int _roundToNearest5(double value) {
-    return (value / 5).round() * 5;
+  static TargetMacros _allocate(int calories, int requestedProtein) {
+    final proteinLimit = calories ~/ 4;
+    final protein = requestedProtein > proteinLimit
+        ? proteinLimit
+        : requestedProtein;
+    final remaining = calories - protein * 4;
+    final preferredFat = (calories * 0.25 / 9).round();
+    final fatLimit = remaining ~/ 9;
+    final fat = preferredFat > fatLimit ? fatLimit : preferredFat;
+    final carbs = ((remaining - fat * 9) / 4).round();
+    // Round the remainder last: whole-gram energy differs by at most 2 kcal.
+    return TargetMacros(
+      calories: calories,
+      proteinG: protein,
+      carbsG: carbs,
+      fatG: fat,
+    );
   }
 }

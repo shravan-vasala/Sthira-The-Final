@@ -16,6 +16,7 @@ import 'package:trufit_bodamma/screens/progress/widgets/shared_chart_card.dart';
 import 'package:trufit_bodamma/theme/app_theme.dart';
 import 'package:trufit_bodamma/widgets/app_navigation_bar.dart';
 import 'package:trufit_bodamma/widgets/rest_timer_bar.dart';
+import 'package:trufit_bodamma/widgets/surface_card.dart';
 
 class _Profile extends ProfileNotifier {
   _Profile(this.height);
@@ -156,6 +157,67 @@ String? _hero(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const Key('progress-hero'))).data;
 
 void main() {
+  testWidgets('Overview keeps supporting statistics behind Details', (
+    tester,
+  ) async {
+    await _show(tester);
+    expect(find.byType(SurfaceCard), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('progress-hero')),
+        matching: find.byType(SurfaceCard),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.ancestor(
+        of: find.byType(SharedChartCard),
+        matching: find.byType(SurfaceCard),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.text('Details'),
+        matching: find.byType(SurfaceCard),
+      ),
+      findsNothing,
+    );
+    expect(find.text('Change in range'), findsNothing);
+    expect(find.text('Daily records'), findsNothing);
+    expect(find.text('4 measurements in this range'), findsOneWidget);
+    expect(find.text('\u22121.5 kg in this range'), findsOneWidget);
+    await _tap(tester, find.text('Details'));
+    expect(find.text('Change in range'), findsOneWidget);
+    expect(find.text('Daily records'), findsOneWidget);
+    expect(find.textContaining('No entry recorded'), findsWidgets);
+  });
+
+  testWidgets(
+    '12M shows a rolling year of weekly averages and opens its actual daily records',
+    (tester) async {
+      await _show(tester);
+      await _tap(tester, find.text('12M'));
+      final chart = _chart(tester);
+      expect(chart.startDate, DateTime(2025, 9, 20));
+      expect(chart.endDate, DateTime(2026, 9, 19));
+      expect(chart.data.length, inInclusiveRange(52, 54));
+      expect(find.text('Weekly averages'), findsOneWidget);
+      expect(_hero(tester), '80.5');
+      chart.onPointTap!(chart.data.lastWhere((p) => p.value != null));
+      await tester.pumpAndSettle();
+      await _tap(tester, find.text('View daily details'));
+      final sheet = tester.widget<ChartDrilldownSheet>(
+        find.byType(ChartDrilldownSheet),
+      );
+      expect(
+        sheet.bucket.endDate.difference(sheet.bucket.startDate).inDays,
+        lessThan(7),
+      );
+      expect(find.text('Daily details'), findsOneWidget);
+    },
+  );
+
   for (final timer in [false, true]) {
     testWidgets('last Progress record clears the measured dock, timer=$timer', (
       tester,
@@ -168,7 +230,7 @@ void main() {
         withDock: true,
         timer: timer,
       );
-      await _tap(tester, find.text('Daily records'));
+      await _tap(tester, find.text('Details'));
       final scroll = tester
           .widget<SingleChildScrollView>(
             find.byKey(const Key('progress-scroll')),
@@ -249,6 +311,7 @@ void main() {
   ) async {
     await _show(tester);
     await _tap(tester, find.text('3M'));
+    await _tap(tester, find.text('Details'));
     final scroll = tester
         .widget<SingleChildScrollView>(find.byKey(const Key('progress-scroll')))
         .controller!;
@@ -281,12 +344,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ProgressScreen), findsOneWidget);
     expect(container.read(selectedDateProvider), DateTime(2026, 8, 1));
-    expect(
-      tester
-          .widget<Text>(find.byKey(const Key('progress-selected-value')))
-          .data,
-      '0 steps',
-    );
+    expect(find.textContaining('0 steps'), findsOneWidget);
+    expect(find.byKey(const Key('progress-selected-value')), findsNothing);
     await _tap(tester, find.text('View day'));
     expect(container.read(selectedDateProvider), DateTime(2026, 9, 14));
     expect(find.text('Home day'), findsOneWidget);
@@ -388,7 +447,7 @@ void main() {
     await tester.ensureVisible(find.text('View day'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    await _tap(tester, find.text('Daily records'));
+    await _tap(tester, find.text('Details'));
     await tester.ensureVisible(
       find.byKey(
         ValueKey('progress-record-${DateTime(2026, 9, 14).toIso8601String()}'),
@@ -455,6 +514,7 @@ void main() {
         ],
       );
       expect(_chart(tester).targetValue, isNull);
+      await _tap(tester, find.text('Details'));
       expect(
         find.textContaining('targets vary by habit or day'),
         findsOneWidget,

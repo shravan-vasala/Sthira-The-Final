@@ -13,9 +13,13 @@ DateTime? _recordedDay(String value) {
 
 String _dateRange(DateTime start, DateTime end) {
   final first = DateFormat(
-    start.year == end.year ? 'd MMM' : 'd MMM yyyy',
+    start.year != end.year
+        ? 'd MMM yyyy'
+        : start.month != end.month
+        ? 'd MMM'
+        : 'd',
   ).format(start);
-  return '$firstâ€“${DateFormat('d MMM yyyy').format(end)}';
+  return '$first\u2013${DateFormat('d MMM yyyy').format(end)}';
 }
 
 String _steps(double value) => NumberFormat('#,##0').format(value.round());
@@ -107,8 +111,10 @@ final insightsProvider = Provider<List<Insight>>((ref) {
         id: 'trend_steps_recorded',
         type: InsightType.trend,
         title: 'Your recent steps',
-        description:
-            'An average of ${_steps(average)} steps across ${stepDays.length} of 7 completed days (${_dateRange(weekStart, yesterday)}).${stepDays.length < 7 ? ' Missing days are excluded.' : ''}',
+        description: '${_steps(average)} steps/day on average',
+        supportingText:
+            '${_dateRange(weekStart, yesterday)} \u00b7 '
+            '${stepDays.length == 7 ? 'All 7 completed days recorded' : '${stepDays.length} of 7 completed days recorded. Missing days are excluded.'}',
         severity: InsightSeverity.neutral,
         dateGenerated: now,
         icon: Icons.directions_walk_rounded,

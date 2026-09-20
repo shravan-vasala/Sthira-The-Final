@@ -812,8 +812,9 @@ Do not use markdown formatting or JSON.
 
   void _ensureApiKey() {
     if (apiKey == null || apiKey!.isEmpty) {
-      throw Exception(
+      throw AiException(
         'Gemini API key is not configured. Please add it in Profile -> AI Settings.',
+        cause: AiErrorCause.invalidKey,
       );
     }
   }

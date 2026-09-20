@@ -92,6 +92,57 @@ class _Harness {
 }
 
 void main() {
+  for (final scenario in [
+    (now: DateTime(2026, 9, 20), range: '13\u201319 Sep 2026'),
+    (now: DateTime(2026, 10, 3), range: '26 Sep\u20132 Oct 2026'),
+    (now: DateTime(2027, 1, 4), range: '28 Dec 2026\u20133 Jan 2027'),
+  ]) {
+    test(
+      'completed step coverage uses an unambiguous range ending ${scenario.now}',
+      () {
+        final harness = _Harness(
+          logs: [
+            for (var i = 1; i <= 7; i++)
+              DailyLog(
+                date: todayKey(
+                  DateTime(
+                    scenario.now.year,
+                    scenario.now.month,
+                    scenario.now.day - i,
+                  ),
+                ),
+                steps: 8440,
+              ),
+          ],
+        )..now = scenario.now;
+        final insight = harness.insights.single;
+        expect(insight.description, '8,440 steps/day on average');
+        expect(
+          insight.supportingText,
+          '${scenario.range} \u00b7 All 7 completed days recorded',
+        );
+      },
+    );
+  }
+
+  test('partial coverage keeps missing readings out of a nonzero average', () {
+    final harness = _Harness(
+      logs: [
+        _day(1, steps: 1000),
+        _day(2, steps: 2000),
+        _day(3, steps: 3000),
+        _day(4, steps: 6000),
+        _day(5, water: 2000),
+      ],
+    );
+    final insight = harness.insights.single;
+    expect(insight.description, '3,000 steps/day on average');
+    expect(
+      insight.supportingText,
+      '12\u201318 Sep 2026 \u00b7 4 of 7 completed days recorded. Missing days are excluded.',
+    );
+  });
+
   test('missing step readings cannot become a low-activity warning', () {
     final harness = _Harness(
       logs: [for (var i = 1; i <= 7; i++) _day(i, water: 2500)],
@@ -118,9 +169,10 @@ void main() {
         ],
       );
       final insight = harness.insights.single;
-      expect(insight.description, contains('average of 0 steps'));
-      expect(insight.description, contains('4 of 7 completed days'));
-      expect(insight.description, contains('12 Sepâ€“18 Sep 2026'));
+      expect(insight.description, '0 steps/day on average');
+      expect(insight.supportingText, contains('4 of 7 completed days'));
+      expect(insight.supportingText, contains('Missing days are excluded.'));
+      expect(insight.supportingText, contains('12\u201318 Sep 2026'));
       expect(insight.severity, InsightSeverity.neutral);
     },
   );
@@ -158,7 +210,7 @@ void main() {
       expect(insight.description, contains('9,000 steps'));
       expect(insight.description, contains('versus 6,000'));
       expect('(5 days)'.allMatches(insight.description).length, 2);
-      expect(insight.description, contains('20 Augâ€“18 Sep 2026'));
+      expect(insight.description, contains('20 Aug\u201318 Sep 2026'));
       expect(insight.description, contains('Other factors may contribute'));
       expect(insight.severity, InsightSeverity.neutral);
     },
@@ -270,8 +322,8 @@ void main() {
       harness.container.invalidate(clockProvider);
       expect(harness.insights.single.id, 'trend_steps_recorded');
       expect(
-        harness.insights.single.description,
-        contains('13 Sepâ€“19 Sep 2026'),
+        harness.insights.single.supportingText,
+        contains('13\u201319 Sep 2026'),
       );
     },
   );
