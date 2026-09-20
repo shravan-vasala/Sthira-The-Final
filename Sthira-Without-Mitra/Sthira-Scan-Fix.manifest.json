@@ -1,13 +1,13 @@
 {
-  "name": "Sthira combined AI scan and build fix",
+  "name": "Sthira AI service recovery fix",
   "files": [
     {
       "path": "lib/services/ai_client.dart",
-      "sha256": "2e7860d13f211fcb1d322075c925146a2a9bc08b1711d418b18063a9e1f5c0e5"
+      "sha256": "be30305f59fdc3eef068f0cb431269f58b3a73e8457739e9244f7b6b7f5f49be"
     },
     {
       "path": "test/services/ai_transport_test.dart",
-      "sha256": "f6b198179b1a7a4b2c8e38d319b9950dd53c374df8c7fb6babae561e69cdfcf3"
+      "sha256": "cbe17410acbc5cca79f9a382915c34bff1cfd23c712da603a686e81fd4277041"
     },
     {
       "path": "lib/screens/home/widgets/day_feeling_card.dart",

@@ -1,81 +1,90 @@
-STHIRA - COMBINED AI PHOTO SCAN AND BUILD FIX
-==========================================
+STHIRA - AI SERVICE RECOVERY FIX
+===============================
 
-This package includes the AI scanner fix that was NOT included in the
-earlier Sthira-Build-Runner-Fix.zip.
+WHAT THE NEW SCREENSHOTS SHOW
+The app now reaches Gemini. Google returned HTTP 503 / UNAVAILABLE on
+both configured photo models. Four attempts consumed the scan budget;
+the last attempt had under one second and ended with a timeout.
 
-WHAT IS FIXED
-The photo request originally inferred a text-only List<Map<String,String>>.
-Attaching the nested inlineData image object then threw a Dart TypeError
-before HTTP dispatch. The list now accepts Map<String,dynamic>.
-Real HTTP tests reproduce the old failure and pass with this fix.
+WHAT THIS UPDATE CHANGES
+- A busy photo model without a provider cooldown gets one attempt before
+  switching to the configured fallback, after a one-second backoff.
+- If the fallback is busy too, stop and show the service-busy message.
+- Do not start a follow-up with less than four seconds of useful time.
+- Reserve 250 ms to return the result before the outer scan deadline.
+- If local recovery time runs out after a known provider-busy response,
+  keep that useful error. Later explicit provider errors still take priority.
+- Keep the 30-second overall limit, models, nutrition validation, provider
+  cooldowns, quota handling and cancellation.
 
-The repeated 1-13 ms "unknown" screenshots are consistent with that old
-request code still running, but the installed phone build cannot be
-verified from screenshots alone.
+This improves recovery and avoids needless waiting. It cannot guarantee
+a successful scan while Google's models are unavailable. Manual meal
+entry remains available. Live Gemini access on your device is not tested.
+Provider guidance: https://ai.google.dev/gemini-api/docs/troubleshooting
 
-The package also includes the Daily Check-in syntax compatibility fix
-and the corrected Isar generator configuration.
+ALSO INCLUDED FROM THE PREVIOUS FIX
+- Typed image request parts: prevents the old pre-network Dart TypeError.
+- Daily Check-in collection syntax compatible with the Isar 3 generator.
+- Isar model-only generation and removal of the unused Riverpod builder.
 
 FILES TO MERGE / OVERWRITE
+Changed for this recovery update:
 - lib/services/ai_client.dart
 - test/services/ai_transport_test.dart
+
+Included again for build compatibility:
 - lib/screens/home/widgets/day_feeling_card.dart
 - build.yaml
 
-APPLY TO THE CORRECT PROJECT
+APPLY TO YOUR BUILD COPY
 1. Close the running Flutter debug session.
-2. Extract this ZIP.
-3. Merge its contents into the project root you are actually building:
+2. Extract this ZIP and merge its contents into your actual project root:
    C:\Users\ShravanKumarVasala\Desktop\Sthira-TheFinal\Sthira-Without-Mitra
-4. Overwrite the four files above. Merge the lib and test folders;
-   do not replace/delete those entire folders.
-5. Keep your pubspec.yaml, pubspec.lock, assets and other project files.
+3. Overwrite the four files above. Merge lib and test; do not replace or
+   delete those entire folders. Keep your other files and dependencies.
 
 VERIFY BEFORE BUILDING
-Optional read-only exact-file verification from your project PowerShell:
+Optional read-only verification, from your project PowerShell:
   & .\Verify-Sthira-Scan-Fix.ps1
 
-This reports [OK] for all four files when they match this package. It does
-not change files, install anything, read your API key or make network calls.
-A DIFFERENT result can also mean your editor changed line endings or you
-have local modifications; inspect that file before replacing it again.
+It checks the four files against Sthira-Scan-Fix.manifest.json. It reads
+no API keys and makes no network calls. It verifies source files, not the
+installed app. DIFFERENT can also mean changed line endings or local edits.
 
-If your PowerShell policy does not allow local scripts, use these built-in
-checks instead (both must print matching lines):
+If local scripts are disabled, these checks should print matching lines:
+  Select-String .\lib\services\ai_client.dart -SimpleMatch 'minimumFollowUpTime'
+  Select-String .\lib\services\ai_client.dart -SimpleMatch 'lastBusyFailure'
   Select-String .\lib\services\ai_client.dart -SimpleMatch "'parts': <Map<String, dynamic>>["
   Select-String .\lib\screens\home\widgets\day_feeling_card.dart -SimpleMatch 'if (feeling != null) feeling'
 
-Also confirm build.yaml contains isar_generator, not riverpod_generator.
-Expected SHA256 hashes are in Sthira-Scan-Fix.manifest.json.
-
 REBUILD AND INSTALL
-Run from the actual project root after copying the files:
+From your project root:
   & "C:\flutter\bin\flutter.bat" clean
   & "C:\flutter\bin\flutter.bat" pub get
   & "C:\flutter\bin\dart.bat" run build_runner build --delete-conflicting-outputs
   & "C:\flutter\bin\flutter.bat" run --release
 
 Connect and select your Android phone for the final command.
-It rebuilds and runs the updated app; hot reload alone is not this check.
-
-If you normally install an APK manually, use this instead of run --release:
+For manual APK installation, replace the final command with:
   & "C:\flutter\bin\flutter.bat" build apk --release
-Then install/update build\app\outputs\flutter-apk\app-release.apk on the phone.
-Creating an APK on the computer does not update the installed phone app.
+Then install/update build\app\outputs\flutter-apk\app-release.apk.
+
+Rebuilding alone does not update the installed phone app. A normal update
+retains app data and API settings. No uninstall is needed for this patch.
 
 AFTER INSTALLATION
-Take a new meal photo and analyse it. Existing API setup is retained by a
-normal app update. Do not share API keys when reporting any later error.
-If it still fails after verifying/rebuilding/installing, share the new
-Recent AI Activity entry. That could represent a different failure.
+Try a fresh photo scan. Previous diagnostic entries can still be visible;
+check the time of any new entry. HTTP 503 means the provider was unavailable,
+not that the old photo-encoding bug has returned. Do not share API keys.
 
 VALIDATION
-- 107 focused AI, scanner and Daily Check-in tests passed on this source.
-- Real local HTTP tests cover prepared JPEGs and PNG preprocessing, with
-  two images and preserved text/ordering.
-- Isar generation previously succeeded with the included build fixes.
-- No new dependency or model changes were made.
+- 115 focused AI, scanner and Daily Check-in tests passed.
+- Eight new regressions cover photo recovery, insufficient time, provider
+  cooldowns, cancellation, deadline handling and accurate error reporting.
+- Focused static analysis reports the same 23 existing lint/advisory
+  findings; it reports no compile errors in the changed files.
+- Tests use a real local HTTP transport with simulated Gemini responses.
+- The prior Isar generation check succeeded with these build fixes.
+- No dependencies or model IDs changed.
 - An Isar analyzer-version advisory can remain without failing generation.
-  Do not force analyzer 14.4 into the current Isar 3 dependency constraints.
-- Live Gemini acceptance on your device/account is not tested by this ZIP.
+  Do not force analyzer 14.4 into Isar 3's older dependency constraints.

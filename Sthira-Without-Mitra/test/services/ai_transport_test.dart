@@ -79,6 +79,7 @@ void main() {
     CancellationToken? token,
     DateTime? deadline,
     void Function(AiScanStage)? onProgress,
+    bool photo = false,
   }) => client.generateJson(
     prompt: 'meal',
     systemInstruction: 'JSON only',
@@ -86,6 +87,11 @@ void main() {
     cancellationToken: token,
     overallDeadline: deadline,
     onProgress: onProgress,
+    imageBytesList: photo
+        ? [img.encodeJpg(img.Image(width: 12, height: 12))]
+        : null,
+    mimeType: photo ? 'image/jpeg' : null,
+    isAlreadyProcessed: photo,
   );
 
   for (final code in [400, 403, 404]) {
@@ -318,6 +324,328 @@ void main() {
       expect(transport.urls.last.path, contains(AiClient.textModelsToTry.last));
     },
   );
+
+  test('photo busy primary waits then tries the fallback once', () async {
+    var calls = 0;
+    final times = <DateTime>[];
+    handler = (req) async {
+      calls++;
+      times.add(DateTime.now());
+      await req.drain<void>();
+      if (calls == 1) {
+        req.response.statusCode = 503;
+        req.response.write('{"error":{"status":"UNAVAILABLE"}}');
+      } else {
+        req.response.write(
+          _response([
+            {'text': '{"ok":true}'},
+          ]),
+        );
+      }
+      await req.response.close();
+    };
+    await withTransport(() async {
+      expect(await request(photo: true), {'ok': true});
+    });
+    expect(calls, 2);
+    expect(
+      transport.urls.map((url) => url.path),
+      AiClient.visionModelsToTry.map(
+        (model) => '/v1beta/models/$model:generateContent',
+      ),
+    );
+    expect(
+      times.last.difference(times.first),
+      greaterThanOrEqualTo(const Duration(milliseconds: 950)),
+    );
+  });
+
+  test(
+    'photo busy responses stop after two models without a final wait',
+    () async {
+      var calls = 0;
+      final terminalResponse = Stopwatch();
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        req.response.statusCode = 503;
+        req.response.write('{"error":{"status":"UNAVAILABLE"}}');
+        if (calls == 2) terminalResponse.start();
+        await req.response.close();
+      };
+      await withTransport(
+        () => expectLater(
+          request(photo: true),
+          throwsA(
+            isA<AiException>()
+                .having(
+                  (error) => error.cause,
+                  'cause',
+                  AiErrorCause.overloaded,
+                )
+                .having((error) => error.statusCode, 'status', 503)
+                .having(
+                  (error) => error.providerCode,
+                  'provider code',
+                  'UNAVAILABLE',
+                ),
+          ),
+        ),
+      );
+      expect(calls, 2);
+      expect(transport.urls.map((url) => url.path).toSet(), hasLength(2));
+      expect(
+        terminalResponse.elapsed,
+        lessThan(const Duration(milliseconds: 900)),
+      );
+    },
+  );
+
+  test(
+    'photo short initial budget permits one request but no futile fallback',
+    () async {
+      var calls = 0;
+      final terminalResponse = Stopwatch();
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        req.response.statusCode = 503;
+        req.response.write('{"error":{"status":"UNAVAILABLE"}}');
+        terminalResponse.start();
+        await req.response.close();
+      };
+      await withTransport(
+        () => expectLater(
+          request(
+            photo: true,
+            deadline: DateTime.now().add(const Duration(seconds: 3)),
+          ),
+          throwsA(
+            isA<AiException>()
+                .having(
+                  (error) => error.cause,
+                  'cause',
+                  AiErrorCause.overloaded,
+                )
+                .having((error) => error.statusCode, 'status', 503),
+          ),
+        ),
+      );
+      expect(calls, 1);
+      expect(transport.urls, hasLength(1));
+      expect(
+        terminalResponse.elapsed,
+        lessThan(const Duration(milliseconds: 900)),
+      );
+    },
+  );
+
+  test('photo explicit busy cooldown retries the same model', () async {
+    var calls = 0;
+    final times = <DateTime>[];
+    handler = (req) async {
+      calls++;
+      times.add(DateTime.now());
+      await req.drain<void>();
+      if (calls == 1) {
+        req.response.statusCode = 503;
+        req.response.write(
+          jsonEncode({
+            'error': {
+              'status': 'UNAVAILABLE',
+              'details': [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.RetryInfo',
+                  'retryDelay': '0.05s',
+                },
+              ],
+            },
+          }),
+        );
+      } else {
+        req.response.write(
+          _response([
+            {'text': '{"ok":true}'},
+          ]),
+        );
+      }
+      await req.response.close();
+    };
+    await withTransport(() async {
+      expect(await request(photo: true), {'ok': true});
+    });
+    expect(calls, 2);
+    expect(transport.urls.first.path, transport.urls.last.path);
+    expect(
+      transport.urls.first.path,
+      contains(AiClient.visionModelsToTry.first),
+    );
+    expect(
+      times.last.difference(times.first),
+      greaterThanOrEqualTo(const Duration(milliseconds: 45)),
+    );
+  });
+
+  test(
+    'photo cancellation during busy backoff does not send a fallback',
+    () async {
+      var calls = 0;
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        req.response.statusCode = 503;
+        req.response.write('{"error":{"status":"UNAVAILABLE"}}');
+        await req.response.close();
+      };
+      final token = CancellationToken();
+      final cancellation = Stopwatch();
+      await withTransport(
+        () => expectLater(
+          request(
+            photo: true,
+            token: token,
+            onProgress: (stage) {
+              if (stage == AiScanStage.retrying) {
+                cancellation.start();
+                token.cancel();
+              }
+            },
+          ),
+          throwsA(
+            isA<AiException>().having(
+              (error) => error.cause,
+              'cause',
+              AiErrorCause.cancelled,
+            ),
+          ),
+        ),
+      );
+      expect(cancellation.isRunning, isTrue);
+      expect(cancellation.elapsed, lessThan(const Duration(milliseconds: 750)));
+      expect(calls, 1);
+      expect(transport.urls, hasLength(1));
+    },
+  );
+
+  test(
+    'photo budget exhaustion after busy preserves 503 before the outer deadline',
+    () async {
+      var calls = 0;
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        if (calls == 1) {
+          req.response.statusCode = 503;
+          req.response.write('{"error":{"status":"UNAVAILABLE"}}');
+          await req.response.close();
+        } else {
+          req.response.bufferOutput = false;
+          req.response.write('{"candidates":');
+          await req.response.flush();
+          // Keep the fallback body open until the client's own budget expires.
+        }
+      };
+      final token = CancellationToken();
+      final deadline = DateTime.now().add(const Duration(seconds: 6));
+      await withTransport(() async {
+        final operation = request(
+          photo: true,
+          token: token,
+          deadline: deadline,
+        );
+        // GeminiFoodService wraps the transport with this same outer deadline.
+        await expectLater(
+          token.waitFor(
+            operation,
+            timeout: deadline.difference(DateTime.now()),
+          ),
+          throwsA(
+            isA<AiException>()
+                .having(
+                  (error) => error.cause,
+                  'cause',
+                  AiErrorCause.overloaded,
+                )
+                .having((error) => error.statusCode, 'status', 503)
+                .having(
+                  (error) => error.providerCode,
+                  'provider code',
+                  'UNAVAILABLE',
+                ),
+          ),
+        );
+      });
+      expect(calls, 2);
+      expect(transport.urls.map((url) => url.path).toSet(), hasLength(2));
+    },
+  );
+
+  test(
+    'photo fallback authorization failure is not masked by earlier busy',
+    () async {
+      var calls = 0;
+      handler = (req) async {
+        calls++;
+        await req.drain<void>();
+        req.response.statusCode = calls == 1 ? 503 : 403;
+        req.response.write(
+          jsonEncode({
+            'error': {
+              'status': calls == 1 ? 'UNAVAILABLE' : 'PERMISSION_DENIED',
+            },
+          }),
+        );
+        await req.response.close();
+      };
+      await withTransport(
+        () => expectLater(
+          request(photo: true),
+          throwsA(
+            isA<AiException>()
+                .having(
+                  (error) => error.cause,
+                  'cause',
+                  AiErrorCause.invalidKey,
+                )
+                .having((error) => error.statusCode, 'status', 403)
+                .having((error) => error.canRetry, 'retry', isFalse)
+                .having(
+                  (error) => error.providerCode,
+                  'provider code',
+                  'PERMISSION_DENIED',
+                ),
+          ),
+        ),
+      );
+      expect(calls, 2);
+    },
+  );
+
+  test('photo stall without a busy response remains a timeout', () async {
+    var calls = 0;
+    handler = (req) async {
+      calls++;
+      await req.drain<void>();
+      req.response.bufferOutput = false;
+      req.response.write('{"candidates":');
+      await req.response.flush();
+      // No provider error was received; the local timeout is the only evidence.
+    };
+    await withTransport(
+      () => expectLater(
+        request(
+          photo: true,
+          deadline: DateTime.now().add(const Duration(seconds: 2)),
+        ),
+        throwsA(
+          isA<AiException>()
+              .having((error) => error.cause, 'cause', AiErrorCause.timeout)
+              .having((error) => error.statusCode, 'provider status', isNull),
+        ),
+      ),
+    );
+    expect(calls, 1);
+  });
 
   test(
     'unrecognized provider reason never enters safe diagnostic fields',

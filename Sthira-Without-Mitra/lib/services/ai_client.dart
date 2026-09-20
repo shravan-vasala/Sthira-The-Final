@@ -547,13 +547,22 @@ class AiClient {
 
     final modelsToUse = isVision ? visionModelsToTry : textModelsToTry;
     final perAttemptTimeout = Duration(seconds: isVision ? 20 : 15);
+    // Leave time to return a useful error before the meal service's outer timer.
+    final completionReserve = isVision
+        ? const Duration(milliseconds: 250)
+        : Duration.zero;
+    final minimumFollowUpTime = isVision
+        ? const Duration(seconds: 4)
+        : Duration.zero;
+    Duration requestTimeLeft() => remainingTime() - completionReserve;
 
     AiErrorCause? lastCause;
     AiException? lastFailure;
+    AiException? lastBusyFailure;
     int attempts = 0;
 
     for (int i = 0; i < modelsToUse.length; i++) {
-      if (DateTime.now().isAfter(computedDeadline)) break;
+      if (requestTimeLeft() <= Duration.zero) break;
       final modelName = modelsToUse[i];
       final int maxRetries =
           1; // max 2 attempts total per model for transient errors
@@ -566,8 +575,11 @@ class AiClient {
             cause: AiErrorCause.cancelled,
           );
         }
-        if (DateTime.now().isAfter(computedDeadline)) break;
-        final remaining = computedDeadline.difference(DateTime.now());
+        final remaining = requestTimeLeft();
+        if (remaining <= Duration.zero ||
+            (attempts > 0 && remaining < minimumFollowUpTime)) {
+          break;
+        }
         final attemptTimeout = remaining < perAttemptTimeout
             ? remaining
             : perAttemptTimeout;
@@ -657,8 +669,22 @@ class AiClient {
           final failure = e is AiException
               ? e
               : AiException('AI request failed.', cause: cause);
-          lastCause = cause;
-          lastFailure = failure;
+          if (isVision &&
+              cause == AiErrorCause.overloaded &&
+              failure.statusCode != null) {
+            lastBusyFailure = failure;
+          }
+          // A local deadline during recovery must not erase a known provider
+          // outage. Explicit provider errors and ordinary attempt timeouts win.
+          final recoveryBudgetExpired =
+              isVision &&
+              cause == AiErrorCause.timeout &&
+              failure.statusCode == null &&
+              requestTimeLeft() <= Duration.zero;
+          lastFailure = recoveryBudgetExpired
+              ? (lastBusyFailure ?? failure)
+              : failure;
+          lastCause = lastFailure.cause;
           AiLogger.log(
             purpose: 'AI error fallback',
             model: modelName,
@@ -683,12 +709,19 @@ class AiClient {
           if (cause == AiErrorCause.rateLimited ||
               cause == AiErrorCause.overloaded) {
             final delay = failure.retryAfter ?? const Duration(seconds: 1);
+            final tryNextPhotoModel =
+                isVision &&
+                cause == AiErrorCause.overloaded &&
+                failure.retryAfter == null;
+            if (tryNextPhotoModel && i == modelsToUse.length - 1) {
+              break; // Stop when the final photo model is also busy.
+            }
             // Never route around a provider cooldown through another model.
-            if (delay >= remainingTime()) {
+            if (delay + minimumFollowUpTime >= requestTimeLeft()) {
               breaker.recordFailure();
               throw failure;
             }
-            if (attempt >= maxRetries) {
+            if (!tryNextPhotoModel && attempt >= maxRetries) {
               if (failure.retryAfter != null ||
                   cause == AiErrorCause.rateLimited) {
                 breaker.recordFailure();
@@ -699,8 +732,11 @@ class AiClient {
             onProgress?.call(AiScanStage.retrying);
             await token.waitFor(
               Future<void>.delayed(delay),
-              timeout: remainingTime(),
+              timeout: requestTimeLeft(),
             );
+            // Photo scans get one attempt per busy model, with backoff before
+            // the configured fallback instead of repeating the same request.
+            if (tryNextPhotoModel) break;
             attempt++;
             continue;
           }
@@ -720,7 +756,8 @@ class AiClient {
       );
     }
 
-    if (DateTime.now().isAfter(computedDeadline)) {
+    if ((!isVision || lastFailure == null) &&
+        requestTimeLeft() <= Duration.zero) {
       throw AiException(
         'The AI is taking too long right now. Please try again.',
         cause: AiErrorCause.timeout,
