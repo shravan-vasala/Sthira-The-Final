@@ -2,7 +2,7 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
   image_path: "assets/icon/logo.jpeg"
-  adaptive_icon_background: "assets/icon/sunflower-background-1024.png"
+  adaptive_icon_background: "assets/icon/sunflower-background-forest-1024.png"
   adaptive_icon_foreground: "assets/icon/sunflower-foreground-1024.png"
   adaptive_icon_monochrome: "assets/icon/sunflower-monochrome-1024.png"
   min_sdk_android: 21

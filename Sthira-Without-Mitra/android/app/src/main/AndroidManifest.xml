@@ -96,7 +96,7 @@
         <receiver android:name="com.trufit.trufit_bodamma.TrufitWidgetProvider" 
                   android:exported="true"
                   android:label="@string/app_name"
-                  android:icon="@mipmap/ic_launcher">
+                  android:icon="@mipmap/launcher_icon">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

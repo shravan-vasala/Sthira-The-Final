@@ -66,6 +66,7 @@ flutter:
     - assets/data/
     - assets/icon/
     - assets/avatars/
+    - assets/welcome/
   fonts:
     - family: Cabinet Grotesk
       fonts:
@@ -97,7 +98,4 @@ flutter:
       fonts:
         - asset: assets/fonts/Caveat-Regular.ttf
 
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path: "assets/icon/logo-final.png"
+

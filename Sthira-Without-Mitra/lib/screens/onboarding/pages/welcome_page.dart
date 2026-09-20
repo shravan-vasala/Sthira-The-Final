@@ -65,8 +65,12 @@ class _WelcomePageState extends State<WelcomePage>
                   parent: _staggerController,
                   curve: const Interval(0.0, 0.3, curve: Motion.exit),
                 ).value;
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final assetName = isDark 
+                    ? 'assets/welcome/sunflower-welcome-dark-512.png'
+                    : 'assets/welcome/sunflower-welcome-light-512.png';
                 Widget logo = Image.asset(
-                  'assets/icon/sunflower-foreground-1024.png',
+                  assetName,
                   width: 120,
                   height: 120,
                   fit: BoxFit.contain,
