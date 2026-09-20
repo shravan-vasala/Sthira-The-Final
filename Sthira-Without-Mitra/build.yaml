@@ -1,9 +1,7 @@
 targets:
   $default:
     builders:
-      riverpod_generator:
+      # Isar collections live in models; providers use manual Riverpod APIs.
+      isar_generator:
         generate_for:
-          - lib/providers/habit_providers.dart
-          - lib/providers/workout_providers.dart
-          - lib/providers/meal_providers.dart
-          - lib/providers/profile_providers.dart
+          - lib/models/*.dart

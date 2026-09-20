@@ -69,7 +69,11 @@ class DayCheckInTile extends ConsumerWidget {
     final enabled = !future && !transitioning && !hydrating;
     final feeling = _feelingLabels[log.dayFeeling];
     final hasNote = log.dayNote?.trim().isNotEmpty ?? false;
-    final summary = [?feeling, if (hasNote) 'Note added'].join(' \u00b7 ');
+    // Keep collection syntax compatible with Isar 3's generator analyzer.
+    final summary = [
+      if (feeling != null) feeling,
+      if (hasNote) 'Note added',
+    ].join(' \u00b7 ');
     final subtitle = transitioning || hydrating
         ? 'Loading check-in\u2026'
         : future
