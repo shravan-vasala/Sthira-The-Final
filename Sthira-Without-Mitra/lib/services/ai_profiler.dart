@@ -1,3 +1,5 @@
+import 'ai_logger.dart';
+
 const bool kEnableAiProfiling = bool.fromEnvironment(
   'AI_PROFILE',
   defaultValue: false,
@@ -6,6 +8,40 @@ const bool kEnableAiProfiling = bool.fromEnvironment(
 enum TerminalOutcome { success, partial, error, cancelled, cacheCompletion }
 
 class AiProfileSession {
+  final String scanId;
+  final int runNumber;
+  final DateTime startedAt;
+  final Stopwatch _elapsed = Stopwatch()..start();
+  bool _finished = false;
+
+  AiProfileSession({String? scanId, this.runNumber = 1})
+    : scanId = scanId ?? AiLogger.newScanId(),
+      startedAt = DateTime.now();
+
+  /// Always available, including release builds without AI_PROFILE.
+  int get elapsedMs => _elapsed.elapsedMilliseconds;
+
+  void finish(TerminalOutcome outcome, {String? failureReason}) {
+    if (_finished) return;
+    _finished = true;
+    _elapsed.stop();
+    terminalOutcome = outcome;
+    this.failureReason = failureReason;
+    phaseMs['totalMs'] = elapsedMs;
+    AiLogger.finishScan(
+      scanId: scanId,
+      run: AiScanRun(
+        runNumber: runNumber,
+        startedAt: startedAt,
+        finishedAt: DateTime.now(),
+        durationMs: elapsedMs,
+        requestCount: attemptCount,
+        outcome: outcome.name,
+        failureReason: failureReason,
+      ),
+    );
+  }
+
   final Map<String, Stopwatch> _timers = {};
   final Map<String, int> phaseMs = {};
 
@@ -77,6 +113,8 @@ class AiProfileSession {
   // Pre-aggregated summary for logging/benchmarking
   Map<String, dynamic> toMap() {
     return {
+      'scanId': scanId,
+      'runNumber': runNumber,
       'uiTapMs': phaseMs['uiTapMs'],
       'selectionDwellMs': phaseMs['selectionDwellMs'],
       'pickMs': phaseMs['pickMs'],

@@ -1,0 +1,41 @@
+{
+  "name": "Sthira AI availability and scan diagnostics fix",
+  "files": [
+    {
+      "path": "lib/services/ai_client.dart",
+      "sha256": "8dac92d64f5904218477fb2ff43a57b1ca033322476db99034dc3cafdb5b2538"
+    },
+    {
+      "path": "lib/services/ai_logger.dart",
+      "sha256": "cac8a5d6fffcf62fd1d56d8adde16ba326e789f07ac7929565a92fd15d9b577c"
+    },
+    {
+      "path": "lib/services/ai_profiler.dart",
+      "sha256": "c57fce693607aaaa3f3af8af2f0f652641742cbd4447785271d2dfb597ea2b45"
+    },
+    {
+      "path": "lib/screens/home/widgets/photo_calorie_scanner_sheet.dart",
+      "sha256": "e351331ac89b89cf1f324b25d5c95d1f8f69dba99a907c9b3b6554f1da9d6e0d"
+    },
+    {
+      "path": "lib/screens/profile/profile_screen.dart",
+      "sha256": "4d8ee2562692d79acebe95afbaab1746b485f2d3730cd1c477ddf7e5cef64818"
+    },
+    {
+      "path": "test/services/ai_model_availability_test.dart",
+      "sha256": "f9094a6f15e1028c8e362a2ad2ef46416dc8e0efe1f52b9175b1dfcc21b60470"
+    },
+    {
+      "path": "test/services/ai_scan_diagnostics_test.dart",
+      "sha256": "fdae4076cdc2ff374a91a58563d9f3ff0e6d84c927d6afe67f2ff4065d283cee"
+    },
+    {
+      "path": "test/screens/home/photo_calorie_scanner_sheet_test.dart",
+      "sha256": "d64b376e33635c81b46f7f4a48462f7d3e2afe8713b494c01cf73fc15cdc6352"
+    },
+    {
+      "path": "test/screens/profile/profile_editor_refinement_test.dart",
+      "sha256": "f4067aec6a6999f7eeef83504852c4e85c2c93ec7037cf8928e83ba8ac21c786"
+    }
+  ]
+}

@@ -33,6 +33,7 @@ import '../../../widgets/offline_banner.dart';
 import '../../../widgets/primary_button.dart';
 import '../../../widgets/setup_sheets.dart';
 import '../../../services/ai_profiler.dart';
+import '../../../services/ai_logger.dart';
 import '../../../services/image_preprocessor.dart';
 
 import 'package:trufit_bodamma/theme/app_typography.dart';
@@ -68,6 +69,26 @@ class _PhotoCalorieScannerSheetState
   final _scanStatus = ValueNotifier<String>('Preparing photos...');
   // AI Measurement Profiler
   AiProfileSession? profiler;
+  String? _scanId;
+  int _scanRunNumber = 0;
+  List<String>? _scanInput;
+
+  void _startProfile({required bool photo}) {
+    // Compare input only in this sheet; neither paths nor meal text are logged.
+    final input = [
+      photo ? 'photo' : 'description',
+      if (photo) ..._selectedImages.map((file) => file.path),
+      _descriptionCtrl.text.trim(),
+    ];
+    if (!listEquals(_scanInput, input)) {
+      _scanId = AiLogger.newScanId();
+      _scanRunNumber = 0;
+      _scanInput = input;
+    }
+    profiler = AiProfileSession(scanId: _scanId, runNumber: ++_scanRunNumber)
+      ..startPhase('totalMs')
+      ..startPhase('firstUsableFrameMs');
+  }
 
   bool _isAnalyzing = false;
   bool _analysisComplete = false;
@@ -133,11 +154,11 @@ class _PhotoCalorieScannerSheetState
     }
   }
 
-  void _finishProfile(TerminalOutcome outcome) {
+  void _finishProfile(TerminalOutcome outcome, {String? failureReason}) {
     final session = profiler;
     if (session == null) return;
     session.endPhase('totalMs');
-    session.recordMetadata(terminalOutcome: outcome);
+    session.finish(outcome, failureReason: failureReason);
     if (kEnableAiProfiling) {
       debugPrint('Meal scan: ${session.toMap()}');
     }
@@ -205,6 +226,7 @@ class _PhotoCalorieScannerSheetState
   @override
   void dispose() {
     _cancellationToken?.cancel();
+    _finishProfile(TerminalOutcome.cancelled);
     unawaited(_connectivitySubscription?.cancel());
     _countdownTimer?.cancel();
     _statusTimer?.cancel();
@@ -469,9 +491,7 @@ class _PhotoCalorieScannerSheetState
     if (!_canUseCurrentLog()) return;
     if (_selectedImages.isEmpty || _isAnalyzing) return;
     FocusManager.instance.primaryFocus?.unfocus();
-    profiler = AiProfileSession()
-      ..startPhase('totalMs')
-      ..startPhase('firstUsableFrameMs');
+    _startProfile(photo: true);
 
     setState(() {
       _isAnalyzing = true;
@@ -558,9 +578,7 @@ class _PhotoCalorieScannerSheetState
     }
 
     FocusManager.instance.primaryFocus?.unfocus();
-    profiler = AiProfileSession();
-    profiler!.startPhase('totalMs');
-    profiler!.startPhase('firstUsableFrameMs');
+    _startProfile(photo: false);
 
     setState(() {
       _isAnalyzing = true;
@@ -608,13 +626,18 @@ class _PhotoCalorieScannerSheetState
   void _handleAnalyzeError(Object e, int token) {
     if (token != _analysisSessionToken) return;
     _statusTimer?.cancel();
-    _finishProfile(TerminalOutcome.error);
     final failure = e is AiException
         ? e
         : AiException(
             'Could not complete the analysis.',
             cause: classifyAiError(e),
           );
+    _finishProfile(
+      failure.cause == AiErrorCause.cancelled
+          ? TerminalOutcome.cancelled
+          : TerminalOutcome.error,
+      failureReason: failure.cause?.name ?? 'unknown',
+    );
     _countdownTimer?.cancel();
     _cooldownSeconds.value = 0;
     if (failure.canRetry && failure.retryAfter != null) {

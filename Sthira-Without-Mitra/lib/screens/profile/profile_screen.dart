@@ -1698,9 +1698,40 @@ class _ProfileTextField extends StatelessWidget {
 
 class _AiActivitySheet extends StatelessWidget {
   const _AiActivitySheet();
+
+  static String _duration(int ms) => '${(ms / 1000).toStringAsFixed(1)} s';
+
+  static String _outcome(AiScanRun run) => switch (run.outcome) {
+    'success' => 'Ready',
+    'cacheCompletion' => 'Ready from cache',
+    'partial' => 'Needs review',
+    'cancelled' => 'Cancelled',
+    _ =>
+      run.failureReason == 'overloaded' ? 'Service busy' : 'Could not finish',
+  };
+
+  static const _privacy =
+      'Up to 20 recent activities, kept in memory on this device. '
+      'Scan timings stop when results are ready to review.';
+
+  Widget _attempt(BuildContext context, AiLogEntry log) => ListTile(
+    dense: true,
+    contentPadding: const EdgeInsets.symmetric(vertical: 4),
+    title: Text(
+      log.scanId == null
+          ? '${log.purpose} \u00b7 ${log.model}'
+          : 'Tap ${log.runNumber ?? 1}, request ${log.attemptNumber ?? 1} '
+                '\u00b7 ${log.model}',
+      style: context.text.caption,
+    ),
+    subtitle: Text(log.outcome, style: context.text.micro),
+    trailing: Text(_duration(log.durationMs), style: context.text.micro),
+  );
+
   @override
   Widget build(BuildContext context) {
-    if (AiLogger.logs.isEmpty) {
+    final activities = AiLogger.activities;
+    if (activities.isEmpty) {
       return AppSheet(
         title: 'Recent AI Activity',
         scrollable: true,
@@ -1712,7 +1743,7 @@ class _AiActivitySheet extends StatelessWidget {
               const Text('No AI requests made yet.'),
               const SizedBox(height: 16),
               Text(
-                'Logs are kept locally on your device for diagnostic purposes (up to 20 recent requests).',
+                _privacy,
                 style: context.text.caption.copyWith(
                   color:
                       Theme.of(context).textTheme.bodySmall?.color ??
@@ -1728,47 +1759,103 @@ class _AiActivitySheet extends StatelessWidget {
     return AppSheet(
       title: 'Recent AI Activity',
       scrollable: true,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text(
-              'Logs are kept locally on your device for diagnostic purposes (up to 20 recent requests).',
-              style: context.text.caption.copyWith(
-                color:
-                    Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+      // The sheet's decorated backdrop sits above the route Material. Keep
+      // expansion feedback on a Material above that backdrop.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                _privacy,
+                style: context.text.caption.copyWith(
+                  color:
+                      Theme.of(context).textTheme.bodySmall?.color ??
+                      Colors.grey,
+                ),
               ),
             ),
-          ),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: AiLogger.logs.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final log = AiLogger.logs[index];
-              return ListTile(
-                title: Text(
-                  '${log.purpose} • ${log.model}',
-                  style: context.text.body.copyWith(
-                    color: Theme.of(context).primaryColor,
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: activities.length,
+              separatorBuilder: (_, _) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final activity = activities[index];
+                final scan = activity.scan;
+                if (scan == null && activity.attempts.length == 1) {
+                  return _attempt(context, activity.attempts.single);
+                }
+                final requests = scan?.requestCount ?? activity.attempts.length;
+                final requestLabel =
+                    '$requests ${requests == 1 ? 'request' : 'requests'}';
+                final taps = scan?.tapCount;
+                final tapLabel = scan == null
+                    ? ''
+                    : scan.firstTapSuccess
+                    ? 'First tap'
+                    : '$taps ${taps == 1 ? 'tap' : 'taps'} '
+                          '(${scan.retryTapCount} ${scan.retryTapCount == 1 ? 'retry' : 'retries'})';
+                final detail = scan == null
+                    ? requestLabel
+                    : '$tapLabel \u00b7 $requestLabel\n'
+                          '${_duration(scan.elapsedMs)} from first tap';
+                return ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(vertical: 4),
+                  childrenPadding: const EdgeInsets.only(bottom: 12),
+                  title: Text(
+                    scan == null
+                        ? 'AI request'
+                        : 'Meal scan \u00b7 ${_outcome(scan.latest)}',
+                    style: context.text.body.copyWith(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
-                ),
-                subtitle: Text(
-                  'Outcome: ${log.outcome}\n${log.timestamp.toString().substring(11, 16)}',
-                  style: context.text.micro,
-                ),
-                trailing: Text(
-                  '${log.durationMs} ms',
-                  style: context.text.micro,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 4),
-              );
-            },
-          ),
-        ],
+                  subtitle: Text(
+                    '$detail \u00b7 ${activity.timestamp.toString().substring(11, 16)}',
+                    style: context.text.caption,
+                  ),
+                  children: [
+                    if (scan != null) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${_duration(scan.activeDurationMs)} processing. '
+                          'Total elapsed includes time between retry taps.',
+                          style: context.text.caption,
+                        ),
+                      ),
+                      for (final run in scan.runs)
+                        ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            'Tap ${run.runNumber} \u00b7 ${_outcome(run)}',
+                            style: context.text.caption,
+                          ),
+                          trailing: Text(
+                            _duration(run.durationMs),
+                            style: context.text.micro,
+                          ),
+                        ),
+                    ],
+                    ...activity.attempts.reversed.map(
+                      (log) => _attempt(context, log),
+                    ),
+                    if (requests > activity.attempts.length)
+                      Text(
+                        'Some older request details are no longer retained.',
+                        style: context.text.micro,
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

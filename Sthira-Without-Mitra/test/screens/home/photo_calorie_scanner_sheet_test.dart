@@ -21,6 +21,7 @@ import 'package:trufit_bodamma/providers/app_providers.dart';
 import 'package:trufit_bodamma/screens/home/widgets/photo_calorie_scanner_sheet.dart';
 import 'package:trufit_bodamma/services/ai_client.dart';
 import 'package:trufit_bodamma/services/ai_profiler.dart';
+import 'package:trufit_bodamma/services/ai_logger.dart';
 import 'package:trufit_bodamma/services/auth_service.dart';
 import 'package:trufit_bodamma/services/nutrition_lookup_service.dart';
 import 'package:trufit_bodamma/theme/app_theme.dart';
@@ -96,6 +97,7 @@ class _ScanCredentials extends CredentialNotifier {
 class _FoodService implements IAiFoodService {
   final pending = <Completer<Map<String, dynamic>?>>[];
   final tokens = <CancellationToken>[];
+  final sessions = <AiProfileSession>[];
   final photoStarted = Completer<void>();
   @override
   Future<void> verifyApiKey(String key) async {}
@@ -129,6 +131,8 @@ class _FoodService implements IAiFoodService {
     final completer = Completer<Map<String, dynamic>?>();
     pending.add(completer);
     tokens.add(cancellationToken!);
+    sessions.add(profiler!);
+    profiler.recordMetadata(attemptCount: 1);
     onProgress?.call(AiScanStage.analyzing);
     return completer.future;
   }
@@ -158,6 +162,7 @@ void main() {
   late _Connection connection;
   late ConnectivityPlatform originalConnection;
   setUp(() {
+    AiLogger.clear();
     originalConnection = ConnectivityPlatform.instance;
     connection = _Connection();
     ConnectivityPlatform.instance = connection;
@@ -626,6 +631,81 @@ void main() {
     );
   }
 
+  testWidgets(
+    'manual Retry stays in one scan and stops timing at editable results',
+    (tester) async {
+      final service = _FoodService();
+      await showScanner(tester, service);
+      await tester.enterText(find.byType(TextField), '1 bowl oats');
+      await tester.tap(find.text('Estimate macros'));
+      await tester.pump();
+      service.pending.first.completeError(
+        AiException(
+          'private provider response',
+          cause: AiErrorCause.overloaded,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(AiLogger.scans.single.latest.outcome, 'error');
+      expect(AiLogger.scans.single.latest.failureReason, 'overloaded');
+      await tester.tap(find.text('Try again'));
+      await tester.pump();
+      expect(service.sessions.last.scanId, service.sessions.first.scanId);
+      expect(service.sessions.last.runNumber, 2);
+      service.pending.last.complete(_meal('Oats'));
+      await tester.pumpAndSettle();
+      expect(find.text('Oats'), findsOneWidget);
+      final scan = AiLogger.scans.single;
+      expect(scan.runs, hasLength(2));
+      expect(scan.retryTapCount, 1);
+      expect(scan.requestCount, 2);
+      expect(scan.latest.outcome, 'success');
+      final completedAt = scan.latest.finishedAt;
+      await tester.pump(const Duration(seconds: 30));
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(scan.latest.finishedAt, completedAt);
+      expect(scan.latest.outcome, 'success');
+      expect(scan.runs, hasLength(2));
+    },
+  );
+
+  testWidgets(
+    'editing the input starts a new scan; closing records cancellation once',
+    (tester) async {
+      final service = _FoodService();
+      await showScanner(tester, service);
+      await tester.enterText(find.byType(TextField), '1 bowl oats');
+      await tester.tap(find.text('Estimate macros'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Cancel analysis'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '1 bowl oats with milk');
+      await tester.tap(find.text('Estimate macros'));
+      await tester.pump();
+      expect(
+        service.sessions.last.scanId,
+        isNot(service.sessions.first.scanId),
+      );
+      expect(service.sessions.last.runNumber, 1);
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(AiLogger.scans, hasLength(2));
+      expect(AiLogger.scans.every((scan) => scan.runs.length == 1), isTrue);
+      expect(
+        AiLogger.scans.every((scan) => scan.latest.outcome == 'cancelled'),
+        isTrue,
+      );
+      for (final pending in service.pending) {
+        pending.complete(_meal('Stale oats'));
+      }
+      await tester.pump();
+      expect(AiLogger.scans.every((scan) => scan.runs.length == 1), isTrue);
+      expect(
+        AiLogger.scans.every((scan) => scan.latest.outcome == 'cancelled'),
+        isTrue,
+      );
+    },
+  );
+
   testWidgets('photo scan shows progress and cancel keeps the photo and hint', (
     tester,
   ) async {
@@ -660,12 +740,14 @@ void main() {
     await tester.tap(find.byTooltip('Cancel analysis'));
     await tester.pumpAndSettle();
     expect(service.tokens.single.isCancelled, isTrue);
+    expect(AiLogger.scans.single.latest.outcome, 'cancelled');
     expect(find.text('Analyze Photo'), findsOneWidget);
     expect(find.text('rice, normal portion'), findsOneWidget);
     service.pending.single.complete(_meal('Stale photo result'));
     await tester.pumpAndSettle();
     expect(find.text('Stale photo result'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
+    expect(AiLogger.scans.single.runs, hasLength(1));
   });
 
   testWidgets(

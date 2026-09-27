@@ -11,6 +11,7 @@ import 'package:trufit_bodamma/screens/profile/widgets/journey_stats_strip.dart'
 import 'package:trufit_bodamma/theme/app_theme.dart';
 import 'package:trufit_bodamma/utils/target_calculator.dart';
 import 'package:trufit_bodamma/widgets/target_estimate_sheet.dart';
+import 'package:trufit_bodamma/services/ai_logger.dart';
 
 class _Profile extends ProfileNotifier {
   _Profile([this.initial]);
@@ -53,6 +54,7 @@ Future<ProviderContainer> _openEditor(
   _Profile profile, {
   double width = 390,
   double textScale = 1,
+  String action = 'Edit Profile',
 }) async {
   tester.view.physicalSize = Size(width, 900);
   tester.view.devicePixelRatio = 1;
@@ -90,8 +92,8 @@ Future<ProviderContainer> _openEditor(
   );
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
-  await tester.ensureVisible(find.text('Edit Profile'));
-  await tester.tap(find.text('Edit Profile'));
+  await tester.ensureVisible(find.text(action));
+  await tester.tap(find.text(action));
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
   return container;
@@ -145,6 +147,8 @@ const _revisedInputs = TargetEstimateInputs(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(AiLogger.clear);
+  tearDown(AiLogger.clear);
   setUpAll(() async {
     PackageInfo.setMockInitialValues(
       appName: 'Sthira',
@@ -174,6 +178,64 @@ void main() {
       await loader.load();
     }
   });
+
+  testWidgets(
+    'AI activity groups retry taps and expands request details at large text',
+    (tester) async {
+      final start = DateTime.now().subtract(const Duration(seconds: 30));
+      for (var run = 1; run <= 2; run++) {
+        final requestCount = run == 1 ? 2 : 1;
+        for (var attempt = 1; attempt <= requestCount; attempt++) {
+          AiLogger.log(
+            purpose: 'scan plate (vision)',
+            model: 'gemini-fixture-flash',
+            durationMs: 3000,
+            outcome: run == 1
+                ? 'overloaded / HTTP 503 / UNAVAILABLE'
+                : 'success',
+            scanId: 'photo-scan',
+            runNumber: run,
+            attemptNumber: attempt,
+          );
+        }
+        AiLogger.finishScan(
+          scanId: 'photo-scan',
+          run: AiScanRun(
+            runNumber: run,
+            startedAt: start.add(Duration(seconds: (run - 1) * 10)),
+            finishedAt: start.add(Duration(seconds: (run - 1) * 10 + 6)),
+            durationMs: 6000,
+            requestCount: requestCount,
+            outcome: run == 1 ? 'error' : 'success',
+            failureReason: run == 1 ? 'overloaded' : null,
+          ),
+        );
+      }
+      await _openEditor(
+        tester,
+        _Profile(),
+        action: 'Recent AI Activity',
+        width: 320,
+        textScale: 2,
+      );
+      expect(find.text('Meal scan \u00b7 Ready'), findsOneWidget);
+      expect(
+        find.textContaining('2 taps (1 retry) \u00b7 3 requests'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('16.0 s from first tap'), findsOneWidget);
+      expect(find.textContaining('Tap 2, request 1'), findsNothing);
+      await tester.ensureVisible(find.text('Meal scan \u00b7 Ready'));
+      await tester.tap(find.text('Meal scan \u00b7 Ready'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Tap 2, request 1'), findsOneWidget);
+      expect(find.textContaining('overloaded / HTTP 503'), findsNWidgets(2));
+      await tester.ensureVisible(find.textContaining('Tap 2, request 1'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets(
     'invalid and nonfinite measurements preserve the editable draft',

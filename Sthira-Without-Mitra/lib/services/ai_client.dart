@@ -370,10 +370,91 @@ class AiClientCircuitBreaker {
   }
 }
 
+/// Short-lived availability hints, owned by one account/client and credential.
+/// A request retains its state object so an old key's late response cannot
+/// change routing after the user has switched credentials.
+class _PhotoModelAvailability {
+  _PhotoModelAvailability(this.now);
+
+  final DateTime Function() now;
+  static const busyCooldown = Duration(seconds: 60);
+  final Map<String, DateTime> _busyUntil = {};
+  final Map<String, AiException> _busyFailures = {};
+  DateTime? _providerCooldownUntil;
+  AiException? _providerFailure;
+
+  bool isBusy(String model) {
+    final until = _busyUntil[model];
+    if (until == null) return false;
+    if (until.isAfter(now())) return true;
+    _busyUntil.remove(model);
+    _busyFailures.remove(model);
+    return false;
+  }
+
+  void markBusy(String model, AiException failure) {
+    _busyUntil[model] = now().add(busyCooldown);
+    _busyFailures[model] = failure;
+  }
+
+  void markAvailable(String model) {
+    _busyUntil.remove(model);
+    _busyFailures.remove(model);
+    // Success on another in-flight request must not erase a provider cooldown.
+  }
+
+  void rememberProviderCooldown(AiException failure, Duration delay) {
+    final until = now().add(delay);
+    if (_providerCooldownUntil == null ||
+        until.isAfter(_providerCooldownUntil!)) {
+      _providerCooldownUntil = until;
+      _providerFailure = failure;
+    }
+  }
+
+  AiException _withDelay(AiException failure, Duration delay) => AiException(
+    failure.message,
+    cause: failure.cause,
+    statusCode: failure.statusCode,
+    providerCode: failure.providerCode,
+    retryAfter: delay,
+    quotaExhausted: failure.quotaExhausted,
+  );
+
+  AiException? get providerCooldownFailure {
+    final until = _providerCooldownUntil;
+    if (until == null) return null;
+    final remaining = until.difference(now());
+    if (remaining > Duration.zero) {
+      return _withDelay(_providerFailure!, remaining);
+    }
+    _providerCooldownUntil = null;
+    _providerFailure = null;
+    return null;
+  }
+
+  AiException? unavailableFailure(List<String> models) {
+    final providerFailure = providerCooldownFailure;
+    if (providerFailure != null) return providerFailure;
+    if (models.any((model) => !isBusy(model))) return null;
+    // Recheck the first model as soon as it is eligible, without adding a
+    // second aggregate circuit-breaker cooldown on top of these hints.
+    final earliest = models.reduce(
+      (a, b) => _busyUntil[a]!.isBefore(_busyUntil[b]!) ? a : b,
+    );
+    return _withDelay(
+      _busyFailures[earliest]!,
+      _busyUntil[earliest]!.difference(now()),
+    );
+  }
+}
+
 class AiClient {
   final AiCache? cache;
-  final AiClientCircuitBreaker _visionCircuitBreaker = AiClientCircuitBreaker();
   final AiClientCircuitBreaker _textCircuitBreaker = AiClientCircuitBreaker();
+  final DateTime Function() _availabilityClock;
+  String? _photoCredentialFingerprint;
+  _PhotoModelAvailability? _photoAvailability;
 
   // Verified Sept 2026: https://ai.google.dev/gemini-api/docs/models
   // Keep the existing vision models until a weighed-photo benchmark supports
@@ -408,11 +489,27 @@ class AiClient {
   })?
   mockCallModelStream;
 
-  AiClient({this.cache, this.mockCallModel, this.mockCallModelStream});
+  AiClient({
+    this.cache,
+    this.mockCallModel,
+    this.mockCallModelStream,
+    DateTime Function()? availabilityClock,
+  }) : _availabilityClock = availabilityClock ?? DateTime.now;
+
+  _PhotoModelAvailability _availabilityFor(String apiKey) {
+    final fingerprint = sha256.convert(utf8.encode(apiKey)).toString();
+    if (_photoCredentialFingerprint != fingerprint) {
+      _photoCredentialFingerprint = fingerprint;
+      _photoAvailability = _PhotoModelAvailability(_availabilityClock);
+    }
+    return _photoAvailability!;
+  }
 
   void dispose() {
     _httpClient?.close(force: true);
     _httpClient = null;
+    _photoAvailability = null;
+    _photoCredentialFingerprint = null;
   }
 
   Future<Map<String, dynamic>?> generateJson({
@@ -447,6 +544,9 @@ class AiClient {
     final token = cancellationToken ?? CancellationToken();
     token.throwIfCancelled();
     final isVision = imageBytesList != null && imageBytesList.isNotEmpty;
+    final photoAvailability = isVision ? _availabilityFor(apiKey) : null;
+    final scanId = profiler?.scanId ?? AiLogger.newScanId();
+    final runNumber = profiler?.runNumber ?? 1;
     // Include preparation, upload, response headers AND response body in the budget.
     final computedDeadline =
         overallDeadline ??
@@ -528,15 +628,20 @@ class AiClient {
       }
     }
 
-    final breaker = isVision ? _visionCircuitBreaker : _textCircuitBreaker;
+    final breaker = isVision ? null : _textCircuitBreaker;
 
-    if (breaker.isOpen) {
+    if (breaker != null && breaker.isOpen) {
       throw AiException(
         'AI is temporarily busy.',
         cause: AiErrorCause.overloaded,
         retryAfter: breaker.remainingCooldown,
       );
     }
+
+    final unavailable = photoAvailability?.unavailableFailure(
+      visionModelsToTry,
+    );
+    if (unavailable != null) throw unavailable;
 
     if (cancellationToken?.isCancelled ?? false) {
       throw AiException(
@@ -545,6 +650,8 @@ class AiClient {
       );
     }
 
+    // Check each model at attempt time: a fallback's cooldown can expire while
+    // the primary request is in flight.
     final modelsToUse = isVision ? visionModelsToTry : textModelsToTry;
     final perAttemptTimeout = Duration(seconds: isVision ? 20 : 15);
     // Leave time to return a useful error before the meal service's outer timer.
@@ -575,6 +682,24 @@ class AiClient {
             cause: AiErrorCause.cancelled,
           );
         }
+        var providerCooldown = photoAvailability?.providerCooldownFailure;
+        while (providerCooldown != null) {
+          final delay = providerCooldown.retryAfter!;
+          if (attempts == 0 ||
+              delay + minimumFollowUpTime >= requestTimeLeft()) {
+            throw providerCooldown;
+          }
+          // Finish any timer-rounding remainder, or a concurrent request's
+          // cooldown extension, without bypassing it or extending our budget.
+          await token.waitFor(
+            Future<void>.delayed(
+              Duration(milliseconds: (delay.inMicroseconds + 999) ~/ 1000),
+            ),
+            timeout: requestTimeLeft(),
+          );
+          providerCooldown = photoAvailability?.providerCooldownFailure;
+        }
+        if (photoAvailability?.isBusy(modelName) ?? false) break;
         final remaining = requestTimeLeft();
         if (remaining <= Duration.zero ||
             (attempts > 0 && remaining < minimumFollowUpTime)) {
@@ -638,9 +763,13 @@ class AiClient {
             durationMs: sw.elapsedMilliseconds,
             preprocessMs: preprocessMs,
             outcome: 'success',
+            scanId: scanId,
+            runNumber: runNumber,
+            attemptNumber: attempts,
           );
 
-          breaker.recordSuccess();
+          breaker?.recordSuccess();
+          photoAvailability?.markAvailable(modelName);
           final writeCache = requestCache;
           if (writeCache != null) {
             unawaited(
@@ -694,8 +823,17 @@ class AiClient {
               cause.toString(),
               if (failure.diagnosticSummary != null) failure.diagnosticSummary!,
             ].join(' / '),
+            scanId: scanId,
+            runNumber: runNumber,
+            attemptNumber: attempts,
           );
           if (cause == AiErrorCause.cancelled) rethrow;
+          if (failure.quotaExhausted && failure.retryAfter != null) {
+            photoAvailability?.rememberProviderCooldown(
+              failure,
+              failure.retryAfter!,
+            );
+          }
           if (failure.quotaExhausted ||
               cause == AiErrorCause.invalidKey ||
               cause == AiErrorCause.offline ||
@@ -709,6 +847,18 @@ class AiClient {
           if (cause == AiErrorCause.rateLimited ||
               cause == AiErrorCause.overloaded) {
             final delay = failure.retryAfter ?? const Duration(seconds: 1);
+            if (failure.retryAfter != null ||
+                cause == AiErrorCause.rateLimited) {
+              photoAvailability?.rememberProviderCooldown(
+                failure,
+                failure.retryAfter ??
+                    (attempt >= maxRetries
+                        ? const Duration(seconds: 15)
+                        : delay),
+              );
+            } else {
+              photoAvailability?.markBusy(modelName, failure);
+            }
             final tryNextPhotoModel =
                 isVision &&
                 cause == AiErrorCause.overloaded &&
@@ -718,14 +868,18 @@ class AiClient {
             }
             // Never route around a provider cooldown through another model.
             if (delay + minimumFollowUpTime >= requestTimeLeft()) {
-              breaker.recordFailure();
-              throw failure;
+              breaker?.recordFailure();
+              throw photoAvailability?.unavailableFailure(visionModelsToTry) ??
+                  failure;
             }
             if (!tryNextPhotoModel && attempt >= maxRetries) {
               if (failure.retryAfter != null ||
                   cause == AiErrorCause.rateLimited) {
-                breaker.recordFailure();
-                throw failure;
+                breaker?.recordFailure();
+                throw photoAvailability?.unavailableFailure(
+                      visionModelsToTry,
+                    ) ??
+                    failure;
               }
               break; // Busy model without a cooldown: try the configured fallback.
             }
@@ -766,10 +920,11 @@ class AiClient {
 
     if (lastCause == AiErrorCause.rateLimited ||
         lastCause == AiErrorCause.overloaded) {
-      breaker.recordFailure();
+      breaker?.recordFailure();
     }
 
-    throw lastFailure ??
+    throw photoAvailability?.unavailableFailure(visionModelsToTry) ??
+        lastFailure ??
         AiException('Could not complete the analysis.', cause: lastCause);
   }
 

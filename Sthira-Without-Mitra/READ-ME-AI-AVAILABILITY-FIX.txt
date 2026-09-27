@@ -1,0 +1,81 @@
+STHIRA - AI AVAILABILITY AND SCAN DIAGNOSTICS
+===========================================
+
+WHAT CHANGED
+Photo scans temporarily skip a model that recently returned a busy response.
+A model becomes eligible again after a 60-second cooldown. The existing
+automatic fallback remains bounded by the analysis deadline.
+
+If both models are cooling down, the scanner retains your photo and shows
+the remaining wait. This avoids repeatedly sending the same failing calls.
+Provider retry delays and rate limits are respected across photo retries.
+Account/client changes and a different API key start fresh availability state;
+late responses from an old key cannot change the new connection's routing.
+
+Recent AI Activity now groups each scan, including its manual retry taps and
+automatic requests. It shows time from the first tap, processing time, and
+expandable request details. Timing stops when results are ready to review.
+Diagnostics are kept in memory and do not record photos, paths, meal text,
+API keys or raw provider response bodies.
+
+The existing models, image settings and food-recognition prompt are unchanged.
+This improves routing and measurement; it cannot guarantee a successful scan
+when both provider models are unavailable.
+
+CHANGED APP FILES - COPY ALL FIVE TOGETHER
+lib/services/ai_client.dart
+lib/services/ai_logger.dart
+lib/services/ai_profiler.dart
+lib/screens/home/widgets/photo_calorie_scanner_sheet.dart
+lib/screens/profile/profile_screen.dart
+
+NEW TEST FILES
+test/services/ai_model_availability_test.dart
+test/services/ai_scan_diagnostics_test.dart
+
+UPDATED TEST FILES
+test/screens/home/photo_calorie_scanner_sheet_test.dart
+test/screens/profile/profile_editor_refinement_test.dart
+
+INSTALL THIS PATCH
+1. Stop the running Flutter session.
+2. Extract the ZIP and merge its contents into the actual project you build:
+   C:\Users\ShravanKumarVasala\Desktop\Sthira-TheFinal\Sthira-Without-Mitra
+3. Replace the nine files listed above. Merge lib/test folders; do not delete
+   or replace the entire folders. These are changed files, not a full project.
+4. Copy all five app files together. The new AI client depends on the updated
+   logger and profiler. Updating only a test file does not update the app.
+5. Rebuild and install from that project using PowerShell:
+   & "C:\flutter\bin\flutter.bat" run --release
+   Select your connected Android phone.
+
+For a manually installed APK:
+   & "C:\flutter\bin\flutter.bat" build apk --release
+Then install/update build\app\outputs\flutter-apk\app-release.apk on the phone.
+
+No model/schema/dependency changes were made; build_runner is not required
+for this patch. This patch builds on the previous AI Service Recovery Fix.
+A normal app update retains saved data and API settings.
+
+OPTIONAL SOURCE VERIFICATION
+From the project root after merging:
+   & .\Verify-Sthira-Availability-Fix.ps1
+It checks SHA256 hashes of all nine source/test files. It does not change
+files or verify which APK is installed. Line-ending changes or local edits
+can also cause a hash mismatch; inspect differences before overwriting.
+
+CHECK ON YOUR PHONE
+Try one photo scan. If the primary is busy and the fallback works, another
+uncached scan during the cooldown should start with the fallback. Open
+Recent AI Activity to see one grouped result and expand its attempts.
+A retry of unchanged input in the same open scanner stays in the same group.
+Changing the photo/hint/description starts a new group.
+
+VALIDATION
+- 146 focused regression tests passed (138 scan/check-in + 8 profile).
+- 24 new regression cases cover availability and scan diagnostics.
+- Includes 320px / 200% text verification of the activity sheet.
+- Focused static analysis found no errors; 39 existing lint/advisory
+  findings remain in the touched files.
+Tests use mock provider responses or local HTTP; live Google inference on
+your phone/account still needs verification.
